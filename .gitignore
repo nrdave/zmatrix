@@ -1,0 +1,3 @@
+# Zig Build System Directories
+zig-cache
+zig-out
