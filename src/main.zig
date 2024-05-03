@@ -27,22 +27,30 @@ const AnsiColor = struct {
     }
 };
 
-fn print_colored_char(
-    char: u8,
+fn set_character_colors(
     fgcolor: AnsiColor,
     bgcolor: AnsiColor,
+    writer: std.fs.File.Writer,
 ) !void {
-    try std.io.getStdOut().writer().print("\x1b[{d};{d}m{c}\x1b[0m\n", .{
+    try writer.print("\x1b[{d};{d}m", .{
         fgcolor.val(),
         bgcolor.val(),
-        char,
     });
 }
 
+fn reset_terminal_colors(writer: std.fs.File.Writer) !void {
+    try writer.print("\x1b[0m", .{});
+}
+
 pub fn main() !void {
-    try print_colored_char(
-        'z',
+    const writer = std.io.getStdOut().writer();
+
+    try set_character_colors(
         AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.dark_text },
         AnsiColor{ .color = AnsiColorCode.red, .type = AnsiColorType.bright_bg },
+        writer,
     );
+
+    try writer.print("{c}", .{'z'});
+    try reset_terminal_colors(writer);
 }
