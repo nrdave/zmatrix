@@ -38,7 +38,7 @@ pub const AnsiColor = struct {
     }
 };
 
-pub fn set_colors(
+pub fn setColors(
     fgcolor: AnsiColor,
     bgcolor: AnsiColor,
     writer: std.fs.File.Writer,
@@ -49,15 +49,15 @@ pub fn set_colors(
     });
 }
 
-pub fn reset_codes(writer: std.fs.File.Writer) !void {
+pub fn resetCodes(writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[0m", .{});
 }
 
-pub fn set_mode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
+pub fn setMode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[{d}m", .{@intFromEnum(mode)});
 }
 
-pub fn clear_mode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
+pub fn clearMode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
     const code = switch (mode) {
         AnsiGraphicsMode.bold => 22,
         else => @intFromEnum(mode) + 20,
@@ -69,35 +69,35 @@ pub fn clear_mode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
 test "color_change" {
     const writer = std.io.getStdOut().writer();
 
-    try set_colors(
+    try setColors(
         AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.dark_text },
         AnsiColor{ .color = AnsiColorCode.red, .type = AnsiColorType.bright_bg },
         writer,
     );
 
     try writer.print("{c}\n", .{'z'});
-    try reset_codes(writer);
+    try resetCodes(writer);
 }
 
 test "mode change" {
     const writer = std.io.getStdOut().writer();
 
-    try set_colors(
+    try setColors(
         AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.bright_text },
         AnsiColor{ .color = AnsiColorCode.blue, .type = AnsiColorType.dark_bg },
         writer,
     );
 
-    try set_mode(AnsiGraphicsMode.strikethrough, writer);
+    try setMode(AnsiGraphicsMode.strikethrough, writer);
 
     try writer.print("{s}\n", .{"hola"});
 
-    try set_mode(AnsiGraphicsMode.underline, writer);
+    try setMode(AnsiGraphicsMode.underline, writer);
     try writer.print("{s}\n", .{"lines"});
 
-    try clear_mode(AnsiGraphicsMode.strikethrough, writer);
+    try clearMode(AnsiGraphicsMode.strikethrough, writer);
     try writer.print("{s}", .{"line"});
 
-    try reset_codes(writer);
+    try resetCodes(writer);
     try writer.print("jj\n", .{});
 }
