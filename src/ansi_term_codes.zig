@@ -65,3 +65,39 @@ pub fn clear_mode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
 
     try writer.print("\x1b[{d}m", .{code});
 }
+
+test "color_change" {
+    const writer = std.io.getStdOut().writer();
+
+    try set_colors(
+        AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.dark_text },
+        AnsiColor{ .color = AnsiColorCode.red, .type = AnsiColorType.bright_bg },
+        writer,
+    );
+
+    try writer.print("{c}\n", .{'z'});
+    try reset_codes(writer);
+}
+
+test "mode change" {
+    const writer = std.io.getStdOut().writer();
+
+    try set_colors(
+        AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.bright_text },
+        AnsiColor{ .color = AnsiColorCode.blue, .type = AnsiColorType.dark_bg },
+        writer,
+    );
+
+    try set_mode(AnsiGraphicsMode.strikethrough, writer);
+
+    try writer.print("{s}\n", .{"hola"});
+
+    try set_mode(AnsiGraphicsMode.underline, writer);
+    try writer.print("{s}\n", .{"lines"});
+
+    try clear_mode(AnsiGraphicsMode.strikethrough, writer);
+    try writer.print("{s}", .{"line"});
+
+    try reset_codes(writer);
+    try writer.print("jj\n", .{});
+}
