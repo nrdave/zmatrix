@@ -15,6 +15,12 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    // 👇 de-reference termsize dep from build.zig.zon
+    const termsize = b.dependency("termsize", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("termsize");
+
     const exe = b.addExecutable(.{
         .name = "zmatrix",
         // In this case the main source file is merely a path, however, in more
@@ -23,6 +29,8 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    // 👇 add the termsize module to executable
+    exe.addModule("termsize", termsize);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
