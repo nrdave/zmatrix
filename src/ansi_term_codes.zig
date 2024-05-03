@@ -18,6 +18,17 @@ pub const AnsiColorType = enum(u8) {
     bright_bg = 10,
 };
 
+pub const AnsiGraphicsMode = enum(u8) {
+    bold = 1,
+    dim = 2,
+    italic = 3,
+    underline = 4,
+    blinking = 5,
+    reverse = 7,
+    hidden = 8,
+    strikethrough = 9,
+};
+
 pub const AnsiColor = struct {
     color: AnsiColorCode = AnsiColorCode.black,
     type: AnsiColorType = AnsiColorType.dark_text,
@@ -27,7 +38,7 @@ pub const AnsiColor = struct {
     }
 };
 
-pub fn set_character_colors(
+pub fn set_colors(
     fgcolor: AnsiColor,
     bgcolor: AnsiColor,
     writer: std.fs.File.Writer,
@@ -38,6 +49,19 @@ pub fn set_character_colors(
     });
 }
 
-pub fn reset_terminal_colors(writer: std.fs.File.Writer) !void {
+pub fn reset_codes(writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[0m", .{});
+}
+
+pub fn set_mode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
+    try writer.print("\x1b[{d}m", .{@intFromEnum(mode)});
+}
+
+pub fn clear_mode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
+    const code = switch (mode) {
+        AnsiGraphicsMode.bold => 22,
+        else => @intFromEnum(mode) + 20,
+    };
+
+    try writer.print("\x1b[{d}m", .{code});
 }
