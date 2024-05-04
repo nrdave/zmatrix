@@ -1,6 +1,6 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
-const cm = @import("char_matrix.zig");
+const cm = @import("cell_matrix.zig");
 const termsize = @import("termsize");
 const AnsiColorCode = ansi.AnsiColorCode;
 const AnsiColorType = ansi.AnsiColorType;
@@ -19,14 +19,36 @@ pub fn main() !void {
         const allocator = &gpa.allocator();
         defer _ = gpa.deinit();
 
-        var matrix = try cm.CharMatrix.init(rows, cols, allocator);
+        var matrix = try cm.CellMatrix.init(rows, cols, allocator);
         defer matrix.deinit(allocator);
 
         for (matrix.matrix, 0..) |_, i| {
             for (matrix.matrix[i], 0..) |_, j| {
                 if (i % 2 == 0) {
-                    matrix.matrix[i][j] = 'a';
-                } else matrix.matrix[i][j] = 'b';
+                    matrix.matrix[i][j] = cm.Cell.init(
+                        'a',
+                        AnsiColor{
+                            .color = AnsiColorCode.black,
+                            .type = AnsiColorType.bright_text,
+                        },
+                        AnsiColor{
+                            .color = AnsiColorCode.blue,
+                            .type = AnsiColorType.dark_bg,
+                        },
+                        AnsiGraphicsMode.italic,
+                    );
+                } else matrix.matrix[i][j] = cm.Cell.init(
+                    'b',
+                    AnsiColor{
+                        .color = AnsiColorCode.red,
+                        .type = AnsiColorType.dark_text,
+                    },
+                    AnsiColor{
+                        .color = AnsiColorCode.magenta,
+                        .type = AnsiColorType.bright_bg,
+                    },
+                    AnsiGraphicsMode.underline,
+                );
             }
         }
 
