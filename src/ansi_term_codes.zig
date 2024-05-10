@@ -19,6 +19,7 @@ pub const AnsiColorType = enum(u8) {
 };
 
 pub const AnsiGraphicsMode = enum(u8) {
+    normal = 0,
     bold = 1,
     dim = 2,
     italic = 3,
