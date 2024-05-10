@@ -48,6 +48,7 @@ pub const CellMatrix = struct {
             for (row) |cell| {
                 try cell.print(writer);
             }
+            try writer.print("\n", .{});
         }
     }
 
