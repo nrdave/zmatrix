@@ -62,7 +62,7 @@ pub const CellMatrix = struct {
 
 test "cell" {
     const writer = std.io.getStdOut().writer();
-    const c = Cell.init(
+    var c = Cell.init(
         'a',
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.black,
@@ -75,6 +75,35 @@ test "cell" {
         ansi.AnsiGraphicsMode.italic,
     );
     try c.print(writer);
+
+    c = Cell.init(
+        'b',
+        ansi.AnsiColor{
+            .color = ansi.AnsiColorCode.red,
+            .type = ansi.AnsiColorType.bright_text,
+        },
+        ansi.AnsiColor{
+            .color = ansi.AnsiColorCode.green,
+            .type = ansi.AnsiColorType.bright_bg,
+        },
+        ansi.AnsiGraphicsMode.underline,
+    );
+    try c.print(writer);
+
+    c = Cell.init(
+        'b',
+        ansi.AnsiColor{
+            .color = ansi.AnsiColorCode.yellow,
+            .type = ansi.AnsiColorType.dark_text,
+        },
+        ansi.AnsiColor{
+            .color = ansi.AnsiColorCode.cyan,
+            .type = ansi.AnsiColorType.bright_bg,
+        },
+        ansi.AnsiGraphicsMode.normal,
+    );
+    try c.print(writer);
+
     try writer.print("\n", .{});
 }
 
