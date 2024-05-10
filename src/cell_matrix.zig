@@ -58,3 +58,67 @@ pub const CellMatrix = struct {
         allocator.free(self.matrix);
     }
 };
+
+test "cell" {
+    const writer = std.io.getStdOut().writer();
+    const c = Cell.init(
+        'a',
+        ansi.AnsiColor{
+            .color = ansi.AnsiColorCode.black,
+            .type = ansi.AnsiColorType.bright_text,
+        },
+        ansi.AnsiColor{
+            .color = ansi.AnsiColorCode.blue,
+            .type = ansi.AnsiColorType.dark_bg,
+        },
+        ansi.AnsiGraphicsMode.italic,
+    );
+    try c.print(writer);
+    try writer.print("\n", .{});
+}
+
+test "cell_matrix" {
+    const writer = std.io.getStdOut().writer();
+
+    const cols = 10;
+    const rows = 10;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = &gpa.allocator();
+    defer _ = gpa.deinit();
+
+    var matrix = try CellMatrix.init(rows, cols, allocator);
+    defer matrix.deinit(allocator);
+
+    for (matrix.matrix, 0..) |_, i| {
+        for (matrix.matrix[i], 0..) |_, j| {
+            if (i % 2 == 0) {
+                matrix.matrix[i][j] = Cell.init(
+                    'a',
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.black,
+                        .type = ansi.AnsiColorType.bright_text,
+                    },
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.blue,
+                        .type = ansi.AnsiColorType.dark_bg,
+                    },
+                    ansi.AnsiGraphicsMode.italic,
+                );
+            } else matrix.matrix[i][j] = Cell.init(
+                'b',
+                ansi.AnsiColor{
+                    .color = ansi.AnsiColorCode.red,
+                    .type = ansi.AnsiColorType.dark_text,
+                },
+                ansi.AnsiColor{
+                    .color = ansi.AnsiColorCode.magenta,
+                    .type = ansi.AnsiColorType.bright_bg,
+                },
+                ansi.AnsiGraphicsMode.underline,
+            );
+        }
+    }
+
+    try matrix.print(writer);
+    try writer.print("\n", .{});
+}
