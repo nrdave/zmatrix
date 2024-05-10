@@ -17,10 +17,35 @@ pub const Cell = struct {
     }
 
     pub fn print(self: Cell, writer: std.fs.File.Writer) !void {
-        try ansi.setColors(self.fgcolor, self.bgcolor, writer);
         try ansi.setMode(self.mode, writer);
+        try ansi.setColors(self.fgcolor, self.bgcolor, writer);
         try writer.print("{c}", .{self.char});
         try ansi.resetCodes(writer);
+    }
+};
+
+pub const CellColumn = struct {
+    line: u32,
+    cells: []Cell,
+
+    pub fn init(len: u32, allocator: *const std.mem.Allocator) !CellColumn {
+        const c = try allocator.alloc(Cell, len);
+        return CellColumn{
+            .line = 0,
+            .cells = c,
+        };
+    }
+
+    pub fn iterate(self: CellColumn, newChar: Cell) void {
+        self.line += 1;
+        for (0..self.cells.len - 1) |i| {
+            self.cells[i] = self.cells[i + 1];
+        }
+        self.cells[self.cells.len - 1] = newChar;
+    }
+
+    pub fn deinit(self: CellColumn, allocator: *const std.mem.Allocator) void {
+        allocator.free(self.cells);
     }
 };
 
@@ -57,6 +82,13 @@ pub const CellMatrix = struct {
             allocator.free(self.matrix[i]);
         }
         allocator.free(self.matrix);
+    }
+
+    pub fn writeColumn(self: CellMatrix, column: CellColumn, starting_row: u32, col: u32) void {
+        _ = self;
+        _ = col;
+        _ = column;
+        _ = starting_row;
     }
 };
 
@@ -151,4 +183,70 @@ test "cell_matrix" {
 
     try matrix.print(writer);
     try writer.print("\n", .{});
+}
+
+test "cell_column" {
+    const writer = std.io.getStdOut().writer();
+
+    // Setting up the initial matrix
+    const cols = 5;
+    const rows = 10;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = &gpa.allocator();
+    defer _ = gpa.deinit();
+
+    var matrix = try CellMatrix.init(rows, cols, allocator);
+    defer matrix.deinit(allocator);
+
+    for (matrix.matrix, 0..) |_, i| {
+        for (matrix.matrix[i], 0..) |_, j| {
+            if (i % 2 == 0) {
+                matrix.matrix[i][j] = Cell.init(
+                    'a',
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.black,
+                        .type = ansi.AnsiColorType.bright_text,
+                    },
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.blue,
+                        .type = ansi.AnsiColorType.dark_bg,
+                    },
+                    ansi.AnsiGraphicsMode.italic,
+                );
+            } else matrix.matrix[i][j] = Cell.init(
+                'b',
+                ansi.AnsiColor{
+                    .color = ansi.AnsiColorCode.red,
+                    .type = ansi.AnsiColorType.dark_text,
+                },
+                ansi.AnsiColor{
+                    .color = ansi.AnsiColorCode.magenta,
+                    .type = ansi.AnsiColorType.bright_bg,
+                },
+                ansi.AnsiGraphicsMode.underline,
+            );
+        }
+    }
+
+    try matrix.print(writer);
+    try writer.print("\n", .{});
+
+    const col = try CellColumn.init(3, allocator);
+    defer col.deinit(allocator);
+    for (col.cells) |*cell| {
+        cell.* = Cell.init(
+            'c',
+            ansi.AnsiColor{
+                .color = ansi.AnsiColorCode.green,
+                .type = ansi.AnsiColorType.bright_text,
+            },
+            ansi.AnsiColor{
+                .color = ansi.AnsiColorCode.red,
+                .type = ansi.AnsiColorType.dark_bg,
+            },
+            ansi.AnsiGraphicsMode.normal,
+        );
+    }
+
+    matrix.writeColumn(col, 2, 1);
 }
