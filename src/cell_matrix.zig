@@ -97,7 +97,7 @@ pub const CellMatrix = struct {
 };
 
 test "cell" {
-    const writer = std.io.getStdOut().writer();
+    const stdout = std.io.getStdOut().writer();
     var c = Cell.init(
         'a',
         ansi.AnsiColor{
@@ -110,7 +110,7 @@ test "cell" {
         },
         ansi.AnsiGraphicsMode.italic,
     );
-    try c.print(writer);
+    try c.print(stdout);
 
     c = Cell.init(
         'b',
@@ -124,7 +124,7 @@ test "cell" {
         },
         ansi.AnsiGraphicsMode.underline,
     );
-    try c.print(writer);
+    try c.print(stdout);
 
     c = Cell.init(
         'b',
@@ -138,13 +138,13 @@ test "cell" {
         },
         ansi.AnsiGraphicsMode.normal,
     );
-    try c.print(writer);
+    try c.print(stdout);
 
-    try writer.print("\n", .{});
+    try stdout.print("\n", .{});
 }
 
 test "cell_matrix" {
-    const writer = std.io.getStdOut().writer();
+    const stdout = std.io.getStdOut().writer();
 
     const cols = 10;
     const rows = 9;
@@ -185,12 +185,12 @@ test "cell_matrix" {
         }
     }
 
-    try matrix.print(writer);
-    try writer.print("\n", .{});
+    try matrix.print(stdout);
+    try stdout.print("\n", .{});
 }
 
 test "cell_column" {
-    const writer = std.io.getStdOut().writer();
+    const stdout = std.io.getStdOut().writer();
 
     // Setting up the initial matrix
     const cols = 5;
@@ -232,8 +232,8 @@ test "cell_column" {
         }
     }
 
-    try matrix.print(writer);
-    try writer.print("\n", .{});
+    try matrix.print(stdout);
+    try stdout.print("\n", .{});
 
     for (matrix.matrix) |*column| {
         column.iterate(Cell.init(
@@ -249,6 +249,6 @@ test "cell_column" {
             ansi.AnsiGraphicsMode.underline,
         ));
     }
-    try matrix.print(writer);
-    try writer.print("\n", .{});
+    try matrix.print(stdout);
+    try stdout.print("\n", .{});
 }
