@@ -71,8 +71,14 @@ test "color_change" {
     const writer = std.io.getStdOut().writer();
 
     try setColors(
-        AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.dark_text },
-        AnsiColor{ .color = AnsiColorCode.red, .type = AnsiColorType.bright_bg },
+        AnsiColor{
+            .color = AnsiColorCode.black,
+            .type = AnsiColorType.dark_text,
+        },
+        AnsiColor{
+            .color = AnsiColorCode.red,
+            .type = AnsiColorType.bright_bg,
+        },
         writer,
     );
 
@@ -84,8 +90,14 @@ test "mode change" {
     const writer = std.io.getStdOut().writer();
 
     try setColors(
-        AnsiColor{ .color = AnsiColorCode.black, .type = AnsiColorType.bright_text },
-        AnsiColor{ .color = AnsiColorCode.blue, .type = AnsiColorType.dark_bg },
+        AnsiColor{
+            .color = AnsiColorCode.black,
+            .type = AnsiColorType.bright_text,
+        },
+        AnsiColor{
+            .color = AnsiColorCode.blue,
+            .type = AnsiColorType.dark_bg,
+        },
         writer,
     );
 
