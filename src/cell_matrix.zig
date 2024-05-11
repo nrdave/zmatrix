@@ -61,10 +61,10 @@ pub const CellColumn = struct {
 };
 
 pub const CellMatrix = struct {
-    rows: u32,
-    columns: u32,
+    num_rows: u32,
+    num_cols: u32,
 
-    matrix: []CellColumn,
+    columns: []CellColumn,
 
     pub fn init(r: u32, c: u32, allocator: *const std.mem.Allocator) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
@@ -73,26 +73,26 @@ pub const CellMatrix = struct {
             m[i] = try CellColumn.init(r, allocator);
         }
         return CellMatrix{
-            .rows = r,
-            .columns = c,
-            .matrix = m,
+            .num_rows = r,
+            .num_cols = c,
+            .columns = m,
         };
     }
 
     pub fn print(self: CellMatrix, writer: std.fs.File.Writer) !void {
-        for (0..self.rows) |row| {
-            for (0..self.columns) |col| {
-                try self.matrix[col].cells[row].print(writer);
+        for (0..self.num_rows) |row| {
+            for (0..self.num_cols) |col| {
+                try self.columns[col].cells[row].print(writer);
             }
             try writer.print("\n", .{});
         }
     }
 
     pub fn deinit(self: CellMatrix, allocator: *const std.mem.Allocator) void {
-        for (self.matrix) |column| {
+        for (self.columns) |column| {
             column.deinit(allocator);
         }
-        allocator.free(self.matrix);
+        allocator.free(self.columns);
     }
 };
 
@@ -155,10 +155,10 @@ test "cell_matrix" {
     var matrix = try CellMatrix.init(rows, cols, allocator);
     defer matrix.deinit(allocator);
 
-    for (0..matrix.rows) |row| {
-        for (0..matrix.columns) |col| {
+    for (0..matrix.num_rows) |row| {
+        for (0..matrix.num_cols) |col| {
             if (row % 2 == 0) {
-                matrix.matrix[col].cells[row] = Cell.init(
+                matrix.columns[col].cells[row] = Cell.init(
                     'a',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.black,
@@ -170,7 +170,7 @@ test "cell_matrix" {
                     },
                     ansi.AnsiGraphicsMode.italic,
                 );
-            } else matrix.matrix[col].cells[row] = Cell.init(
+            } else matrix.columns[col].cells[row] = Cell.init(
                 'b',
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.red,
@@ -202,10 +202,10 @@ test "cell_column" {
     var matrix = try CellMatrix.init(rows, cols, allocator);
     defer matrix.deinit(allocator);
 
-    for (0..matrix.rows) |row| {
-        for (0..matrix.columns) |col| {
+    for (0..matrix.num_rows) |row| {
+        for (0..matrix.num_cols) |col| {
             if (row % 2 == 0) {
-                matrix.matrix[col].cells[row] = Cell.init(
+                matrix.columns[col].cells[row] = Cell.init(
                     'a',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.black,
@@ -217,7 +217,7 @@ test "cell_column" {
                     },
                     ansi.AnsiGraphicsMode.italic,
                 );
-            } else matrix.matrix[col].cells[row] = Cell.init(
+            } else matrix.columns[col].cells[row] = Cell.init(
                 'b',
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.red,
@@ -235,7 +235,7 @@ test "cell_column" {
     try matrix.print(stdout);
     try stdout.print("\n", .{});
 
-    for (matrix.matrix) |*column| {
+    for (matrix.columns) |*column| {
         column.iterate(Cell.init(
             'c',
             ansi.AnsiColor{

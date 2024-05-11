@@ -30,7 +30,7 @@ pub fn main() !void {
             std.time.sleep(20_000_000);
             try matrix.print(stdout);
 
-            for (matrix.matrix) |*column| {
+            for (matrix.columns) |*column| {
                 column.iterate(cm.Cell.init(
                     'c',
                     ansi.AnsiColor{
