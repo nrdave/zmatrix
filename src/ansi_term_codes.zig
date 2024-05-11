@@ -67,6 +67,10 @@ pub fn clearMode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[{d}m", .{code});
 }
 
+pub fn clearScreen(writer: std.fs.File.Writer) !void {
+    try writer.print("\x1b[2J", .{});
+}
+
 test "color_change" {
     const writer = std.io.getStdOut().writer();
 
