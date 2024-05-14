@@ -98,7 +98,9 @@ pub const CellMatrix = struct {
             for (0..self.num_cols) |col| {
                 try self.columns[col].cells[row].print(writer);
             }
-            try writer.print("\n", .{});
+            if (row < self.num_rows - 1) {
+                try writer.print("\n", .{});
+            }
         }
     }
 
