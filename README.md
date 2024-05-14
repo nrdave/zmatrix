@@ -10,6 +10,11 @@ functionality of cmatrix.
 
 ## Dependencies
 
+At the moment, zmatrix only depends on the
+[zig-termsize](https://github.com/softprops/zig-termsize) library for
+determining the terminal size regardless of platform. It's simple, but why
+reinvent the wheel.
+
 Unlike cmatrix, zmatrix does not depend on ncurses. This was done for a few
 reasons, including
 
