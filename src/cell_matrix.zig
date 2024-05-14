@@ -49,10 +49,10 @@ pub const CellColumn = struct {
 
     pub fn iterate(self: *CellColumn, newChar: Cell) void {
         self.line += 1;
-        for (1..self.cells.len) |i| {
-            self.cells[self.cells.len - i] = self.cells[self.cells.len - i - 1];
+        for (0..self.cells.len - 1) |i| {
+            self.cells[i] = self.cells[i + 1];
         }
-        self.cells[0] = newChar;
+        self.cells[self.cells.len - 1] = newChar;
     }
 
     pub fn deinit(self: CellColumn, allocator: std.mem.Allocator) void {
