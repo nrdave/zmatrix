@@ -162,9 +162,7 @@ test "cell_matrix" {
 
     const cols = 10;
     const rows = 9;
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = &gpa.allocator();
-    defer _ = gpa.deinit();
+    const allocator = std.testing.allocator;
 
     var matrix = try CellMatrix.init(rows, cols, allocator);
     defer matrix.deinit(allocator);
@@ -209,9 +207,7 @@ test "cell_column" {
     // Setting up the initial matrix
     const cols = 5;
     const rows = 5;
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = &gpa.allocator();
-    defer _ = gpa.deinit();
+    const allocator = std.testing.allocator;
 
     var matrix = try CellMatrix.init(rows, cols, allocator);
     defer matrix.deinit(allocator);
