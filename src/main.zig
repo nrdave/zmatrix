@@ -3,10 +3,6 @@ const ansi = @import("ansi_term_codes.zig");
 const cm = @import("cell_matrix.zig");
 const termsize = @import("termsize");
 
-const AnsiColorCode = ansi.AnsiColorCode;
-const AnsiColorType = ansi.AnsiColorType;
-const AnsiColor = ansi.AnsiColor;
-const AnsiGraphicsMode = ansi.AnsiGraphicsMode;
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
