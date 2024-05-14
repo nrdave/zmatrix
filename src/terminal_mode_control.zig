@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 
 const is_windows = builtin.os.tag == .windows;
 
-const TermStatus = if (is_windows) std.os.windows.DWORD else std.posix.termios;
+pub const TermStatus = if (is_windows) std.os.windows.DWORD else std.posix.termios;
 
 pub fn enableRawMode(input: std.fs.File.Handle) !TermStatus {
     if (is_windows) {

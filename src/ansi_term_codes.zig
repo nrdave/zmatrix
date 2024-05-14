@@ -71,6 +71,14 @@ pub fn clearScreen(writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[2J", .{});
 }
 
+pub fn hideCursor(writer: std.fs.File.Writer) !void {
+    try writer.print("\x1b[?25l", .{});
+}
+
+pub fn showCursor(writer: std.fs.File.Writer) !void {
+    try writer.print("\x1b[?25h", .{});
+}
+
 test "color_change" {
     const writer = std.io.getStdOut().writer();
 

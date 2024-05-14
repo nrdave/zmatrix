@@ -24,6 +24,8 @@ pub fn main() !void {
         // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
 
+        try ansi.hideCursor(stdout);
+
         var input: u8 = 0;
 
         while (input != 'q') {
@@ -48,6 +50,15 @@ pub fn main() !void {
 
             input = try stdin.readByte();
         }
-        try termctrl.restoreTermMode(std.io.getStdIn().handle, orig_term_state);
+        try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
     }
+}
+
+inline fn cleanup(
+    input_handle: std.fs.File.Handle,
+    output: std.fs.File.Writer,
+    original_term_state: termctrl.TermStatus,
+) !void {
+    try termctrl.restoreTermMode(input_handle, original_term_state);
+    try ansi.showCursor(output);
 }
