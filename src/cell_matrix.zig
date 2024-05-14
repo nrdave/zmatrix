@@ -28,7 +28,7 @@ pub const CellColumn = struct {
     line: u32,
     cells: []Cell,
 
-    pub fn init(len: u32, allocator: *const std.mem.Allocator) !CellColumn {
+    pub fn init(len: u32, allocator: std.mem.Allocator) !CellColumn {
         const c = try allocator.alloc(Cell, len);
 
         for (c) |*cell| {
@@ -55,7 +55,7 @@ pub const CellColumn = struct {
         self.cells[0] = newChar;
     }
 
-    pub fn deinit(self: CellColumn, allocator: *const std.mem.Allocator) void {
+    pub fn deinit(self: CellColumn, allocator: std.mem.Allocator) void {
         allocator.free(self.cells);
     }
 };
@@ -88,7 +88,7 @@ pub const CellMatrix = struct {
         }
     }
 
-    pub fn deinit(self: CellMatrix, allocator: *const std.mem.Allocator) void {
+    pub fn deinit(self: CellMatrix, allocator: std.mem.Allocator) void {
         for (self.columns) |column| {
             column.deinit(allocator);
         }

@@ -17,7 +17,7 @@ pub fn main() !void {
         const cols = terminfo.width;
         const rows = terminfo.height;
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-        const allocator = &gpa.allocator();
+        const allocator = gpa.allocator();
         defer _ = gpa.deinit();
 
         var matrix = try cm.CellMatrix.init(rows, cols, allocator);
