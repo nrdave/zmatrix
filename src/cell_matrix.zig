@@ -66,11 +66,25 @@ pub const CellMatrix = struct {
 
     columns: []CellColumn,
 
-    pub fn init(r: u32, c: u32, allocator: *const std.mem.Allocator) !CellMatrix {
+    pub fn init(r: u32, c: u32, allocator: std.mem.Allocator) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
-        var m = try allocator.alloc(CellColumn, c);
-        for (m, 0..) |_, i| {
-            m[i] = try CellColumn.init(r, allocator);
+        const m = try allocator.alloc(CellColumn, c);
+        for (m) |*col| {
+            col.* = try CellColumn.init(r, allocator);
+            for (col.cells) |*cell| {
+                cell.* = Cell.init(
+                    ' ',
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.white,
+                        .type = ansi.AnsiColorType.bright_text,
+                    },
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.black,
+                        .type = ansi.AnsiColorType.dark_bg,
+                    },
+                    ansi.AnsiGraphicsMode.italic,
+                );
+            }
         }
         return CellMatrix{
             .num_rows = r,
