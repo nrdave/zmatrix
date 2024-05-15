@@ -79,6 +79,10 @@ pub fn showCursor(writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[?25h", .{});
 }
 
+pub fn setCursorPos(writer: std.fs.File.Writer, row: usize, col: usize) !void {
+    try writer.print("\x1b[{d};{d}H", .{ row, col });
+}
+
 test "color_change" {
     const writer = std.io.getStdOut().writer();
 

@@ -96,6 +96,7 @@ pub const CellMatrix = struct {
     pub fn print(self: CellMatrix, writer: std.fs.File.Writer) !void {
         for (0..self.num_rows) |row| {
             for (0..self.num_cols) |col| {
+                try ansi.setCursorPos(writer, row, col);
                 try self.columns[col].cells[row].print(writer);
             }
             if (row < self.num_rows - 1) {
