@@ -39,14 +39,12 @@ pub const AnsiColor = struct {
     }
 };
 
-pub fn setColors(
-    fgcolor: AnsiColor,
-    bgcolor: AnsiColor,
+pub fn setColor(
+    color: AnsiColor,
     writer: anytype,
 ) !void {
-    try writer.print("\x1b[{d};{d}m", .{
-        fgcolor.val(),
-        bgcolor.val(),
+    try writer.print("\x1b[{d}m", .{
+        color.val(),
     });
 }
 
@@ -86,15 +84,12 @@ pub fn setCursorPos(writer: std.fs.File.Writer, row: usize, col: usize) !void {
 test "color_change" {
     const writer = std.io.getStdOut().writer();
 
-    try setColors(
+    try setColor(
         AnsiColor{
             .color = AnsiColorCode.black,
             .type = AnsiColorType.dark_text,
         },
-        AnsiColor{
-            .color = AnsiColorCode.red,
-            .type = AnsiColorType.bright_bg,
-        },
+
         writer,
     );
 
@@ -105,15 +100,12 @@ test "color_change" {
 test "mode change" {
     const writer = std.io.getStdOut().writer();
 
-    try setColors(
+    try setColor(
         AnsiColor{
             .color = AnsiColorCode.black,
             .type = AnsiColorType.bright_text,
         },
-        AnsiColor{
-            .color = AnsiColorCode.blue,
-            .type = AnsiColorType.dark_bg,
-        },
+
         writer,
     );
 
