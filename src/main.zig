@@ -14,6 +14,10 @@ pub fn main() !void {
         // If the termsize is available, create a cell matrix of that size
         const cols = terminfo.width;
         const rows = terminfo.height;
+        const b = std.io.BufferedWriter(1_000_000, @TypeOf(stdout));
+        var buffer: b = .{ .unbuffered_writer = stdout };
+        const bufOut = buffer.writer();
+
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         const allocator = gpa.allocator();
         defer _ = gpa.deinit();
@@ -30,9 +34,9 @@ pub fn main() !void {
 
         while (input != 'q') {
             try ansi.clearScreen(stdout);
-            std.time.sleep(20_000_000);
-            try matrix.print(stdout);
+            try matrix.print(bufOut);
 
+            try buffer.flush();
             for (matrix.columns) |*column| {
                 column.iterate(cm.Cell.init(
                     'c',
