@@ -42,7 +42,7 @@ pub const AnsiColor = struct {
 pub fn setColors(
     fgcolor: AnsiColor,
     bgcolor: AnsiColor,
-    writer: std.fs.File.Writer,
+    writer: anytype,
 ) !void {
     try writer.print("\x1b[{d};{d}m", .{
         fgcolor.val(),
@@ -50,15 +50,15 @@ pub fn setColors(
     });
 }
 
-pub fn resetCodes(writer: std.fs.File.Writer) !void {
+pub fn resetCodes(writer: anytype) !void {
     try writer.print("\x1b[0m", .{});
 }
 
-pub fn setMode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
+pub fn setMode(mode: AnsiGraphicsMode, writer: anytype) !void {
     try writer.print("\x1b[{d}m", .{@intFromEnum(mode)});
 }
 
-pub fn clearMode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
+pub fn clearMode(mode: AnsiGraphicsMode, writer: anytype) !void {
     const code = switch (mode) {
         AnsiGraphicsMode.bold => 22,
         else => @intFromEnum(mode) + 20,
@@ -67,15 +67,15 @@ pub fn clearMode(mode: AnsiGraphicsMode, writer: std.fs.File.Writer) !void {
     try writer.print("\x1b[{d}m", .{code});
 }
 
-pub fn clearScreen(writer: std.fs.File.Writer) !void {
+pub fn clearScreen(writer: anytype) !void {
     try writer.print("\x1b[2J", .{});
 }
 
-pub fn hideCursor(writer: std.fs.File.Writer) !void {
+pub fn hideCursor(writer: anytype) !void {
     try writer.print("\x1b[?25l", .{});
 }
 
-pub fn showCursor(writer: std.fs.File.Writer) !void {
+pub fn showCursor(writer: anytype) !void {
     try writer.print("\x1b[?25h", .{});
 }
 

@@ -16,7 +16,7 @@ pub const Cell = struct {
         };
     }
 
-    pub fn print(self: Cell, writer: std.fs.File.Writer) !void {
+    pub fn print(self: Cell, writer: anytype) !void {
         try ansi.setMode(self.mode, writer);
         try ansi.setColors(self.fgcolor, self.bgcolor, writer);
         try writer.print("{c}", .{self.char});
@@ -93,7 +93,7 @@ pub const CellMatrix = struct {
         };
     }
 
-    pub fn print(self: CellMatrix, writer: std.fs.File.Writer) !void {
+    pub fn print(self: CellMatrix, writer: anytype) !void {
         for (0..self.num_rows) |row| {
             for (0..self.num_cols) |col| {
                 try ansi.setCursorPos(writer, row, col);
