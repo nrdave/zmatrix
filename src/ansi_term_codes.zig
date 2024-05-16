@@ -77,7 +77,7 @@ pub fn showCursor(writer: anytype) !void {
     try writer.print("\x1b[?25h", .{});
 }
 
-pub fn setCursorPos(writer: std.fs.File.Writer, row: usize, col: usize) !void {
+pub fn setCursorPos(writer: anytype, row: usize, col: usize) !void {
     try writer.print("\x1b[{d};{d}H", .{ row, col });
 }
 
