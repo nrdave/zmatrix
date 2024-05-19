@@ -42,7 +42,7 @@ pub fn main() !void {
                     'c',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.red,
-                        .type = ansi.AnsiColorType.bright_text,
+                        .category = ansi.AnsiColorType.bright_text,
                     },
                     ansi.AnsiGraphicsMode.underline,
                 ));

@@ -32,10 +32,10 @@ pub const AnsiGraphicsMode = enum(u8) {
 
 pub const AnsiColor = struct {
     color: AnsiColorCode = AnsiColorCode.black,
-    type: AnsiColorType = AnsiColorType.dark_text,
+    category: AnsiColorType = AnsiColorType.dark_text,
 
     fn val(self: *const AnsiColor) u8 {
-        return @intFromEnum(self.color) + @intFromEnum(self.type) * 10;
+        return @intFromEnum(self.color) + @intFromEnum(self.category) * 10;
     }
 };
 

@@ -34,7 +34,7 @@ pub const CellColumn = struct {
                 ' ',
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.black,
-                    .type = ansi.AnsiColorType.dark_text,
+                    .category = ansi.AnsiColorType.dark_text,
                 },
                 ansi.AnsiGraphicsMode.normal,
             );
@@ -75,7 +75,7 @@ pub const CellMatrix = struct {
                     ' ',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.white,
-                        .type = ansi.AnsiColorType.bright_text,
+                        .category = ansi.AnsiColorType.bright_text,
                     },
                     ansi.AnsiGraphicsMode.italic,
                 );
@@ -114,11 +114,11 @@ test "cell" {
         'a',
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.black,
-            .type = ansi.AnsiColorType.bright_text,
+            .category = ansi.AnsiColorType.bright_text,
         },
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.blue,
-            .type = ansi.AnsiColorType.dark_bg,
+            .category = ansi.AnsiColorType.dark_bg,
         },
         ansi.AnsiGraphicsMode.italic,
     );
@@ -128,11 +128,11 @@ test "cell" {
         'b',
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.red,
-            .type = ansi.AnsiColorType.bright_text,
+            .category = ansi.AnsiColorType.bright_text,
         },
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.green,
-            .type = ansi.AnsiColorType.bright_bg,
+            .category = ansi.AnsiColorType.bright_bg,
         },
         ansi.AnsiGraphicsMode.underline,
     );
@@ -141,11 +141,11 @@ test "cell" {
         'b',
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.yellow,
-            .type = ansi.AnsiColorType.dark_text,
+            .category = ansi.AnsiColorType.dark_text,
         },
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.cyan,
-            .type = ansi.AnsiColorType.bright_bg,
+            .category = ansi.AnsiColorType.bright_bg,
         },
         ansi.AnsiGraphicsMode.normal,
     );
@@ -171,11 +171,11 @@ test "cell_matrix" {
                     'a',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.black,
-                        .type = ansi.AnsiColorType.bright_text,
+                        .category = ansi.AnsiColorType.bright_text,
                     },
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.blue,
-                        .type = ansi.AnsiColorType.dark_bg,
+                        .category = ansi.AnsiColorType.dark_bg,
                     },
                     ansi.AnsiGraphicsMode.italic,
                 );
@@ -183,11 +183,11 @@ test "cell_matrix" {
                 'b',
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.red,
-                    .type = ansi.AnsiColorType.dark_text,
+                    .category = ansi.AnsiColorType.dark_text,
                 },
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.magenta,
-                    .type = ansi.AnsiColorType.bright_bg,
+                    .category = ansi.AnsiColorType.bright_bg,
                 },
                 ansi.AnsiGraphicsMode.underline,
             );
@@ -216,11 +216,11 @@ test "cell_column" {
                     'a',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.black,
-                        .type = ansi.AnsiColorType.bright_text,
+                        .category = ansi.AnsiColorType.bright_text,
                     },
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.blue,
-                        .type = ansi.AnsiColorType.dark_bg,
+                        .category = ansi.AnsiColorType.dark_bg,
                     },
                     ansi.AnsiGraphicsMode.italic,
                 );
@@ -228,11 +228,11 @@ test "cell_column" {
                 'b',
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.red,
-                    .type = ansi.AnsiColorType.dark_text,
+                    .category = ansi.AnsiColorType.dark_text,
                 },
                 ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.magenta,
-                    .type = ansi.AnsiColorType.bright_bg,
+                    .category = ansi.AnsiColorType.bright_bg,
                 },
                 ansi.AnsiGraphicsMode.underline,
             );
@@ -247,11 +247,11 @@ test "cell_column" {
             'c',
             ansi.AnsiColor{
                 .color = ansi.AnsiColorCode.red,
-                .type = ansi.AnsiColorType.bright_text,
+                .category = ansi.AnsiColorType.bright_text,
             },
             ansi.AnsiColor{
                 .color = ansi.AnsiColorCode.green,
-                .type = ansi.AnsiColorType.dark_bg,
+                .category = ansi.AnsiColorType.dark_bg,
             },
             ansi.AnsiGraphicsMode.underline,
         ));
