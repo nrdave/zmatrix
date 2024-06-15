@@ -14,7 +14,7 @@ pub const Cell = struct {
         };
     }
 
-    pub fn print(self: Cell, writer: anytype) !void {
+    pub fn print(self: *Cell, writer: anytype) !void {
         try ansi.setMode(self.mode, writer);
         try ansi.setColor(self.color, writer);
         try writer.print("{c}", .{self.char});
@@ -94,9 +94,6 @@ pub const CellMatrix = struct {
                 try ansi.setCursorPos(writer, row, col);
                 try self.columns[col].cells[row].print(writer);
             }
-            if (row < self.num_rows - 1) {
-                try writer.print("\n", .{});
-            }
         }
     }
 
@@ -116,10 +113,6 @@ test "cell" {
             .color = ansi.AnsiColorCode.black,
             .category = ansi.AnsiColorType.bright_text,
         },
-        ansi.AnsiColor{
-            .color = ansi.AnsiColorCode.blue,
-            .category = ansi.AnsiColorType.dark_bg,
-        },
         ansi.AnsiGraphicsMode.italic,
     );
     try c.print(stdout);
@@ -130,10 +123,7 @@ test "cell" {
             .color = ansi.AnsiColorCode.red,
             .category = ansi.AnsiColorType.bright_text,
         },
-        ansi.AnsiColor{
-            .color = ansi.AnsiColorCode.green,
-            .category = ansi.AnsiColorType.bright_bg,
-        },
+
         ansi.AnsiGraphicsMode.underline,
     );
     try c.print(stdout);
@@ -142,10 +132,6 @@ test "cell" {
         ansi.AnsiColor{
             .color = ansi.AnsiColorCode.yellow,
             .category = ansi.AnsiColorType.dark_text,
-        },
-        ansi.AnsiColor{
-            .color = ansi.AnsiColorCode.cyan,
-            .category = ansi.AnsiColorType.bright_bg,
         },
         ansi.AnsiGraphicsMode.normal,
     );
@@ -167,30 +153,34 @@ test "cell_matrix" {
     for (0..matrix.num_rows) |row| {
         for (0..matrix.num_cols) |col| {
             if (row % 2 == 0) {
+                try ansi.setColor(ansi.AnsiColor{
+                    .color = ansi.AnsiColorCode.blue,
+                    .category = ansi.AnsiColorType.dark_bg,
+                }, stdout);
                 matrix.columns[col].cells[row] = Cell.init(
                     'a',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.black,
                         .category = ansi.AnsiColorType.bright_text,
                     },
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.blue,
-                        .category = ansi.AnsiColorType.dark_bg,
-                    },
+
                     ansi.AnsiGraphicsMode.italic,
                 );
-            } else matrix.columns[col].cells[row] = Cell.init(
-                'b',
-                ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.red,
-                    .category = ansi.AnsiColorType.dark_text,
-                },
-                ansi.AnsiColor{
+            } else {
+                try ansi.setColor(ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.magenta,
                     .category = ansi.AnsiColorType.bright_bg,
-                },
-                ansi.AnsiGraphicsMode.underline,
-            );
+                }, stdout);
+                matrix.columns[col].cells[row] = Cell.init(
+                    'b',
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.red,
+                        .category = ansi.AnsiColorType.dark_text,
+                    },
+
+                    ansi.AnsiGraphicsMode.underline,
+                );
+            }
         }
     }
 
@@ -212,30 +202,34 @@ test "cell_column" {
     for (0..matrix.num_rows) |row| {
         for (0..matrix.num_cols) |col| {
             if (row % 2 == 0) {
+                try ansi.setColor(ansi.AnsiColor{
+                    .color = ansi.AnsiColorCode.blue,
+                    .category = ansi.AnsiColorType.dark_bg,
+                }, stdout);
                 matrix.columns[col].cells[row] = Cell.init(
                     'a',
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.black,
                         .category = ansi.AnsiColorType.bright_text,
                     },
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.blue,
-                        .category = ansi.AnsiColorType.dark_bg,
-                    },
+
                     ansi.AnsiGraphicsMode.italic,
                 );
-            } else matrix.columns[col].cells[row] = Cell.init(
-                'b',
-                ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.red,
-                    .category = ansi.AnsiColorType.dark_text,
-                },
-                ansi.AnsiColor{
+            } else {
+                try ansi.setColor(ansi.AnsiColor{
                     .color = ansi.AnsiColorCode.magenta,
                     .category = ansi.AnsiColorType.bright_bg,
-                },
-                ansi.AnsiGraphicsMode.underline,
-            );
+                }, stdout);
+                matrix.columns[col].cells[row] = Cell.init(
+                    'b',
+                    ansi.AnsiColor{
+                        .color = ansi.AnsiColorCode.red,
+                        .category = ansi.AnsiColorType.dark_text,
+                    },
+
+                    ansi.AnsiGraphicsMode.underline,
+                );
+            }
         }
     }
 
@@ -248,10 +242,6 @@ test "cell_column" {
             ansi.AnsiColor{
                 .color = ansi.AnsiColorCode.red,
                 .category = ansi.AnsiColorType.bright_text,
-            },
-            ansi.AnsiColor{
-                .color = ansi.AnsiColorCode.green,
-                .category = ansi.AnsiColorType.dark_bg,
             },
             ansi.AnsiGraphicsMode.underline,
         ));
