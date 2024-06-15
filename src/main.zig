@@ -28,18 +28,21 @@ pub fn main() !void {
         // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
 
+        var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
+
         try ansi.hideCursor(stdout);
 
         var input: u8 = 0;
 
         while (input != 'q') {
-            try ansi.clearScreen(stdout);
             try matrix.print(bufOut);
+
+            const char: u8 = if (rng.random().intRangeAtMost(u8, 0, 10) == 0) 'c' else ' ';
 
             try buffer.flush();
             for (matrix.columns) |*column| {
                 column.iterate(cm.Cell.init(
-                    'c',
+                    char,
                     ansi.AnsiColor{
                         .color = ansi.AnsiColorCode.red,
                         .category = ansi.AnsiColorType.bright_text,
