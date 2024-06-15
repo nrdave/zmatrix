@@ -87,7 +87,7 @@ test "color_change" {
     try setColor(
         AnsiColor{
             .color = AnsiColorCode.black,
-            .type = AnsiColorType.dark_text,
+            .category = AnsiColorType.dark_text,
         },
 
         writer,
@@ -103,7 +103,7 @@ test "mode change" {
     try setColor(
         AnsiColor{
             .color = AnsiColorCode.black,
-            .type = AnsiColorType.bright_text,
+            .category = AnsiColorType.bright_text,
         },
 
         writer,
