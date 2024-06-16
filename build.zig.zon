@@ -1,7 +1,12 @@
-.{ .name = "zmatrix", .version = "0.0.1", .dependencies = .{
+.{
+    .name = "zmatrix",
+    .version = "0.0.1",
+    .minimum_zig_version = "0.13.0",
+    .dependencies = .{
         .termsize = .{
             .url = "https://github.com/softprops/zig-termsize/archive/refs/tags/v0.1.0.tar.gz",
             .hash = "1220c37fb03650fd86dff19134116a2bd7e8e20731193aa30f11769881a2d558c8c1",
         },
     },
-.paths = .{""} }
+    .paths = .{""},
+}
