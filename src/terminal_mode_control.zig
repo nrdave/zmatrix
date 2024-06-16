@@ -8,14 +8,28 @@ pub const TermStatus = if (is_windows) std.os.windows.DWORD else std.posix.termi
 pub fn enableRawMode(input: std.fs.File.Handle) !TermStatus {
     if (is_windows) {
         var orig_mode: TermStatus = undefined;
-        _ = std.os.windows.kernel32.GetConsoleMode(input, &orig_mode);
+
+        if (std.os.windows.kernel32.GetConsoleMode(input, &orig_mode) == 0) {
+            return switch (std.os.windows.kernel32.GetLastError()) {
+                .INVALID_HANDLE => error.InvalidHandle,
+                else => |err| std.os.windows.unexpectedError(err),
+            };
+        }
+
         var t = orig_mode;
         // This line clears the following flags
         // 0x04: ENABLE_ECHO_INPUT
         // 0x02: ENABLE_LINE_INPUT
         // It also sets the ENABLE_VIRTUAL_TERMINAL_INPUT flag 0x200
-        t = t & ~(0x04 | 0x02) | 0x200;
-        @compileError("Windows Support not ready - waiting for Zig 0.13.0");
+        t = t & ~(@as(std.os.windows.DWORD, 0x04 | 0x02)) | 0x200;
+        if (std.os.windows.kernel32.SetConsoleMode(input, t) == 0) {
+            return switch (std.os.windows.kernel32.GetLastError()) {
+                .INVALID_HANDLE => error.InvalidHandle,
+                else => |err| std.os.windows.unexpectedError(err),
+            };
+        }
+
+        return orig_mode;
     } else {
         const orig_termios = try std.posix.tcgetattr(input);
         var t = orig_termios;
@@ -29,7 +43,12 @@ pub fn enableRawMode(input: std.fs.File.Handle) !TermStatus {
 
 pub fn restoreTermMode(input: std.fs.File.Handle, original_term_status: TermStatus) !void {
     if (is_windows) {
-        @compileError("Windows Support not ready - waiting for Zig 0.13.0");
+        if (std.os.windows.kernel32.SetConsoleMode(input, original_term_status) == 0) {
+            return switch (std.os.windows.kernel32.GetLastError()) {
+                .INVALID_HANDLE => error.InvalidHandle,
+                else => |err| std.os.windows.unexpectedError(err),
+            };
+        }
     } else {
         try std.posix.tcsetattr(input, std.posix.TCSA.FLUSH, original_term_status);
     }
