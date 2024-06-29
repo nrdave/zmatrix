@@ -36,6 +36,7 @@ pub fn main() !void {
         try ansi.clearScreen(stdout);
 
         const charcols = try allocator.alloc(col.Column, cols);
+        defer allocator.free(charcols);
         for (0.., charcols) |i, *c| {
             c.* = col.Column.init(
                 i,
@@ -72,7 +73,6 @@ pub fn main() !void {
             input = try stdin.readByte();
         }
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
-        allocator.free(charcols);
     }
 }
 
@@ -83,4 +83,6 @@ inline fn cleanup(
 ) !void {
     try termctrl.restoreTermMode(input_handle, original_term_state);
     try ansi.showCursor(output);
+    try ansi.setCursorPos(output, 0, 0);
+    try ansi.clearScreen(output);
 }
