@@ -31,6 +31,7 @@ pub fn main() !void {
         var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
 
         try ansi.hideCursor(stdout);
+        try ansi.clearScreen(stdout);
 
         var input: u8 = 0;
 
