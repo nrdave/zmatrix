@@ -4,18 +4,15 @@ const ansi = @import("ansi_term_codes.zig");
 pub const Cell = struct {
     char: u8,
     color: ansi.AnsiColor,
-    mode: ansi.AnsiGraphicsMode,
 
-    pub fn init(c: u8, clr: ansi.AnsiColor, m: ansi.AnsiGraphicsMode) Cell {
+    pub fn init(c: u8, clr: ansi.AnsiColor) Cell {
         return Cell{
             .char = c,
             .color = clr,
-            .mode = m,
         };
     }
 
     pub fn print(self: *Cell, writer: anytype) !void {
-        try ansi.setMode(self.mode, writer);
         try ansi.setColor(self.color, writer);
         try writer.print("{c}", .{self.char});
         try ansi.resetCodes(writer);
@@ -36,7 +33,6 @@ pub const CellColumn = struct {
                     .color = ansi.AnsiColorCode.black,
                     .category = ansi.AnsiColorType.dark_text,
                 },
-                ansi.AnsiGraphicsMode.normal,
             );
         }
 
@@ -77,7 +73,6 @@ pub const CellMatrix = struct {
                         .color = ansi.AnsiColorCode.white,
                         .category = ansi.AnsiColorType.bright_text,
                     },
-                    ansi.AnsiGraphicsMode.italic,
                 );
             }
         }

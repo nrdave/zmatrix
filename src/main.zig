@@ -47,7 +47,6 @@ pub fn main() !void {
                         .color = ansi.AnsiColorCode.red,
                         .category = ansi.AnsiColorType.bright_text,
                     },
-                    ansi.AnsiGraphicsMode.underline,
                 ));
             }
 
