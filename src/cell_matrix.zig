@@ -42,8 +42,12 @@ pub const CellMatrix = struct {
     }
 
     pub fn writeChar(self: CellMatrix, char: u8, x: usize, y: isize) void {
+        const row: usize = @bitCast(y);
+        const col = x;
+
         if (((y < self.matrix.len) and (y > 0)) and (x < self.matrix[0].len)) {
-            self.matrix[@bitCast(y)][x].char = char;
+            self.matrix[row][col].char = char;
+            self.matrix[row][col].updated = true;
         }
     }
 
@@ -51,8 +55,11 @@ pub const CellMatrix = struct {
         try ansi.setColor(self.color, writer);
         for (0..self.num_rows) |row| {
             for (0..self.num_cols) |col| {
-                try ansi.setCursorPos(writer, row + self.y0, col + self.x0);
-                try writer.print("{c}", .{self.matrix[row][col].char});
+                if (self.matrix[row][col].updated == true) {
+                    try ansi.setCursorPos(writer, row + self.y0, col + self.x0);
+                    try writer.print("{c}", .{self.matrix[row][col].char});
+                    self.matrix[row][col].updated = false;
+                }
             }
         }
     }
