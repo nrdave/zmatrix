@@ -30,29 +30,49 @@ pub fn main() !void {
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
 
         var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
+        var char = rng.random().intRangeAtMost(u8, 0, 127);
 
         try ansi.hideCursor(stdout);
         try ansi.clearScreen(stdout);
 
-        var charcol = col.Column.init(2, 5);
+        const charcols = try allocator.alloc(col.Column, cols);
+        for (0.., charcols) |i, *c| {
+            c.* = col.Column.init(
+                i,
+                rng.random().intRangeAtMost(
+                    usize,
+                    0,
+                    20,
+                ),
+            );
+        }
 
         var input: u8 = 0;
         while (input != 'q') {
             try matrix.print(bufOut);
-
-            const char = rng.random().intRangeLessThan(
-                u8,
-                std.ascii.control_code.us + 1,
-                std.ascii.control_code.del,
-            );
-
-            try charcol.iterate(&matrix, char);
-
             try buffer.flush();
 
+            for (charcols) |*c| {
+                char = rng.random().int(u8);
+                if (std.ascii.isPrint(char)) {
+                    try c.iterate(&matrix, char);
+                }
+                if (c.tail > matrix.num_rows) {
+                    const i = c.col;
+                    c.* = col.Column.init(
+                        i,
+                        rng.random().intRangeAtMost(
+                            usize,
+                            0,
+                            20,
+                        ),
+                    );
+                }
+            }
             input = try stdin.readByte();
         }
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
+        allocator.free(charcols);
     }
 }
 
