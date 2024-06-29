@@ -3,244 +3,84 @@ const ansi = @import("ansi_term_codes.zig");
 
 pub const Cell = struct {
     char: u8,
-    color: ansi.AnsiColor,
+    updated: bool,
 
-    pub fn init(c: u8, clr: ansi.AnsiColor) Cell {
+    pub fn init(c: u8) Cell {
         return Cell{
             .char = c,
-            .color = clr,
+            .updated = true,
         };
-    }
-
-    pub fn print(self: *Cell, writer: anytype) !void {
-        try ansi.setColor(self.color, writer);
-        try writer.print("{c}", .{self.char});
-        try ansi.resetCodes(writer);
-    }
-};
-
-pub const CellColumn = struct {
-    line: u32,
-    cells: []Cell,
-
-    pub fn init(len: u32, allocator: std.mem.Allocator) !CellColumn {
-        const c = try allocator.alloc(Cell, len);
-
-        for (c) |*cell| {
-            cell.* = Cell.init(
-                ' ',
-                ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.black,
-                    .category = ansi.AnsiColorType.dark_text,
-                },
-            );
-        }
-
-        return CellColumn{
-            .line = 0,
-            .cells = c,
-        };
-    }
-
-    pub fn iterate(self: *CellColumn, newChar: Cell) void {
-        self.line += 1;
-        for (1..self.cells.len) |i| {
-            self.cells[self.cells.len - i] = self.cells[self.cells.len - i - 1];
-        }
-        self.cells[0] = newChar;
-    }
-
-    pub fn deinit(self: CellColumn, allocator: std.mem.Allocator) void {
-        allocator.free(self.cells);
     }
 };
 
 pub const CellMatrix = struct {
-    num_rows: u32,
-    num_cols: u32,
+    x0: usize = 0,
+    y0: usize = 0,
+    num_rows: usize,
+    num_cols: usize,
+    color: ansi.AnsiColor,
 
-    columns: []CellColumn,
+    matrix: [][]Cell,
 
-    pub fn init(r: u32, c: u32, allocator: std.mem.Allocator) !CellMatrix {
+    pub fn init(r: u32, c: u32, allocator: std.mem.Allocator, color: ansi.AnsiColor) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
-        const m = try allocator.alloc(CellColumn, c);
-        for (m) |*col| {
-            col.* = try CellColumn.init(r, allocator);
-            for (col.cells) |*cell| {
+        const m = try allocator.alloc([]Cell, r);
+        for (m) |*row| {
+            row.* = try allocator.alloc(Cell, c);
+            for (row.*) |*cell| {
                 cell.* = Cell.init(
                     ' ',
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.white,
-                        .category = ansi.AnsiColorType.bright_text,
-                    },
                 );
             }
         }
-        return CellMatrix{
-            .num_rows = r,
-            .num_cols = c,
-            .columns = m,
-        };
+        return CellMatrix{ .num_rows = r, .num_cols = c, .matrix = m, .color = color };
+    }
+
+    pub fn setOrigin(self: *CellMatrix, x: usize, y: usize) void {
+        self.x0 = x;
+        self.y0 = y;
+    }
+
+    pub fn writeChar(self: CellMatrix, char: u8, x: usize, y: isize) void {
+        if (((y < self.matrix.len) and (y > 0)) and (x < self.matrix[0].len)) {
+            self.matrix[@bitCast(y)][x].char = char;
+        }
     }
 
     pub fn print(self: CellMatrix, writer: anytype) !void {
+        try ansi.setColor(self.color, writer);
         for (0..self.num_rows) |row| {
             for (0..self.num_cols) |col| {
-                try ansi.setCursorPos(writer, row, col);
-                try self.columns[col].cells[row].print(writer);
+                try ansi.setCursorPos(writer, row + self.y0, col + self.x0);
+                try writer.print("{c}", .{self.matrix[row][col].char});
             }
         }
     }
 
     pub fn deinit(self: CellMatrix, allocator: std.mem.Allocator) void {
-        for (self.columns) |column| {
-            column.deinit(allocator);
+        for (self.matrix) |row| {
+            allocator.free(row);
         }
-        allocator.free(self.columns);
+        allocator.free(self.matrix);
     }
 };
 
-test "cell" {
-    const stdout = std.io.getStdOut().writer();
-    var c = Cell.init(
-        'a',
-        ansi.AnsiColor{
-            .color = ansi.AnsiColorCode.black,
-            .category = ansi.AnsiColorType.bright_text,
-        },
-        ansi.AnsiGraphicsMode.italic,
-    );
-    try c.print(stdout);
-
-    c = Cell.init(
-        'b',
-        ansi.AnsiColor{
-            .color = ansi.AnsiColorCode.red,
-            .category = ansi.AnsiColorType.bright_text,
-        },
-
-        ansi.AnsiGraphicsMode.underline,
-    );
-    try c.print(stdout);
-    c = Cell.init(
-        'b',
-        ansi.AnsiColor{
-            .color = ansi.AnsiColorCode.yellow,
-            .category = ansi.AnsiColorType.dark_text,
-        },
-        ansi.AnsiGraphicsMode.normal,
-    );
-    try c.print(stdout);
-
-    try stdout.print("\n", .{});
-}
-
 test "cell_matrix" {
+    const alloc = std.testing.allocator;
+
+    var x = try CellMatrix.init(
+        5,
+        5,
+        alloc,
+        ansi.AnsiColor{ .color = .blue },
+    );
+    x.setOrigin(60, 0);
+    try x.writeChar('c', 3, 3);
+
     const stdout = std.io.getStdOut().writer();
+    try ansi.clearScreen(stdout);
 
-    const cols = 10;
-    const rows = 9;
-    const allocator = std.testing.allocator;
+    try x.print(stdout);
 
-    var matrix = try CellMatrix.init(rows, cols, allocator);
-    defer matrix.deinit(allocator);
-
-    for (0..matrix.num_rows) |row| {
-        for (0..matrix.num_cols) |col| {
-            if (row % 2 == 0) {
-                try ansi.setColor(ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.blue,
-                    .category = ansi.AnsiColorType.dark_bg,
-                }, stdout);
-                matrix.columns[col].cells[row] = Cell.init(
-                    'a',
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.black,
-                        .category = ansi.AnsiColorType.bright_text,
-                    },
-
-                    ansi.AnsiGraphicsMode.italic,
-                );
-            } else {
-                try ansi.setColor(ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.magenta,
-                    .category = ansi.AnsiColorType.bright_bg,
-                }, stdout);
-                matrix.columns[col].cells[row] = Cell.init(
-                    'b',
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.red,
-                        .category = ansi.AnsiColorType.dark_text,
-                    },
-
-                    ansi.AnsiGraphicsMode.underline,
-                );
-            }
-        }
-    }
-
-    try matrix.print(stdout);
-    try stdout.print("\n", .{});
-}
-
-test "cell_column" {
-    const stdout = std.io.getStdOut().writer();
-
-    // Setting up the initial matrix
-    const cols = 5;
-    const rows = 5;
-    const allocator = std.testing.allocator;
-
-    var matrix = try CellMatrix.init(rows, cols, allocator);
-    defer matrix.deinit(allocator);
-
-    for (0..matrix.num_rows) |row| {
-        for (0..matrix.num_cols) |col| {
-            if (row % 2 == 0) {
-                try ansi.setColor(ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.blue,
-                    .category = ansi.AnsiColorType.dark_bg,
-                }, stdout);
-                matrix.columns[col].cells[row] = Cell.init(
-                    'a',
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.black,
-                        .category = ansi.AnsiColorType.bright_text,
-                    },
-
-                    ansi.AnsiGraphicsMode.italic,
-                );
-            } else {
-                try ansi.setColor(ansi.AnsiColor{
-                    .color = ansi.AnsiColorCode.magenta,
-                    .category = ansi.AnsiColorType.bright_bg,
-                }, stdout);
-                matrix.columns[col].cells[row] = Cell.init(
-                    'b',
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.red,
-                        .category = ansi.AnsiColorType.dark_text,
-                    },
-
-                    ansi.AnsiGraphicsMode.underline,
-                );
-            }
-        }
-    }
-
-    try matrix.print(stdout);
-    try stdout.print("\n", .{});
-
-    for (matrix.columns) |*column| {
-        column.iterate(Cell.init(
-            'c',
-            ansi.AnsiColor{
-                .color = ansi.AnsiColorCode.red,
-                .category = ansi.AnsiColorType.bright_text,
-            },
-            ansi.AnsiGraphicsMode.underline,
-        ));
-    }
-    try matrix.print(stdout);
-    try stdout.print("\n", .{});
+    x.deinit(alloc);
 }

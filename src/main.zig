@@ -1,6 +1,7 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
 const cm = @import("cell_matrix.zig");
+const col = @import("char_column.zig");
 const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
 
@@ -22,7 +23,7 @@ pub fn main() !void {
         const allocator = gpa.allocator();
         defer _ = gpa.deinit();
 
-        var matrix = try cm.CellMatrix.init(rows, cols, allocator);
+        var matrix = try cm.CellMatrix.init(rows, cols, allocator, ansi.AnsiColor{ .color = .green });
         defer matrix.deinit(allocator);
 
         // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
@@ -33,23 +34,21 @@ pub fn main() !void {
         try ansi.hideCursor(stdout);
         try ansi.clearScreen(stdout);
 
-        var input: u8 = 0;
+        var charcol = col.Column.init(2, 5);
 
+        var input: u8 = 0;
         while (input != 'q') {
             try matrix.print(bufOut);
 
-            const char: u8 = if (rng.random().intRangeAtMost(u8, 0, 10) == 0) 'c' else ' ';
+            const char = rng.random().intRangeLessThan(
+                u8,
+                std.ascii.control_code.us + 1,
+                std.ascii.control_code.del,
+            );
+
+            try charcol.iterate(&matrix, char);
 
             try buffer.flush();
-            for (matrix.columns) |*column| {
-                column.iterate(cm.Cell.init(
-                    char,
-                    ansi.AnsiColor{
-                        .color = ansi.AnsiColorCode.red,
-                        .category = ansi.AnsiColorType.bright_text,
-                    },
-                ));
-            }
 
             input = try stdin.readByte();
         }
