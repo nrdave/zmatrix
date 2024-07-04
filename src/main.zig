@@ -83,8 +83,8 @@ pub fn main() !void {
                         i,
                         rng.random().intRangeAtMost(
                             usize,
-                            0,
-                            20,
+                            5,
+                            cols / 4,
                         ),
                     );
                 }
