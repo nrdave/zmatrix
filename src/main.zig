@@ -63,6 +63,7 @@ pub fn main() !void {
             getInput,
             .{ stdin, &input },
         );
+        defer io_thread.join();
 
         while (input != 'q') {
             try matrix.print(bufOut);
@@ -87,7 +88,6 @@ pub fn main() !void {
             }
             std.time.sleep(printDelay);
         }
-        io_thread.join();
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
     }
 }
