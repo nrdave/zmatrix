@@ -5,11 +5,19 @@ const col = @import("char_column.zig");
 const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
 
+fn getInput(reader: std.fs.File.Reader, char: *u8) !void {
+    while (char.* != 'q') {
+        char.* = try reader.readByte();
+    }
+}
+
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
 
     const t = try termsize.termSize(std.io.getStdOut());
+
+    const printDelay = 16_666_667; // Approximately the number of nanoseconds to delay to get 60 FPS
 
     if (t) |*terminfo| {
         // If the termsize is available, create a cell matrix of that size
@@ -49,6 +57,13 @@ pub fn main() !void {
         }
 
         var input: u8 = 0;
+
+        var io_thread = try std.Thread.spawn(
+            .{},
+            getInput,
+            .{ stdin, &input },
+        );
+
         while (input != 'q') {
             try matrix.print(bufOut);
             try buffer.flush();
@@ -70,8 +85,9 @@ pub fn main() !void {
                     );
                 }
             }
-            input = try stdin.readByte();
+            std.time.sleep(printDelay);
         }
+        io_thread.join();
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
     }
 }
