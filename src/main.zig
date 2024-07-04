@@ -89,6 +89,8 @@ pub fn main() !void {
             std.time.sleep(printDelay);
         }
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
+    } else {
+        std.debug.print("Unable to start zmatrix: Could not determine terminal size", .{});
     }
 }
 
@@ -99,6 +101,7 @@ inline fn cleanup(
 ) !void {
     try termctrl.restoreTermMode(input_handle, original_term_state);
     try ansi.showCursor(output);
+    try ansi.resetCodes(output);
     try ansi.setCursorPos(output, 0, 0);
     try ansi.clearScreen(output);
 }
