@@ -15,14 +15,14 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
 
-    const t = try termsize.termSize(std.io.getStdOut());
+    var t = try termsize.termSize(std.io.getStdOut());
 
     const printDelay = 16_666_667; // Approximately the number of nanoseconds to delay to get 60 FPS
 
     if (t) |*terminfo| {
         // If the termsize is available, create a cell matrix of that size
-        const cols = terminfo.width;
-        const rows = terminfo.height;
+        var prev_cols: u16 = 0;
+        var prev_rows: u16 = 0;
         const b = std.io.BufferedWriter(1_000_000, @TypeOf(stdout));
         var buffer: b = .{ .unbuffered_writer = stdout };
         const bufOut = buffer.writer();
@@ -30,9 +30,6 @@ pub fn main() !void {
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         const allocator = gpa.allocator();
         defer _ = gpa.deinit();
-
-        var matrix = try cm.CellMatrix.init(rows, cols, allocator, ansi.AnsiColor{ .color = .green });
-        defer matrix.deinit(allocator);
 
         // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
@@ -43,18 +40,19 @@ pub fn main() !void {
         try ansi.hideCursor(stdout);
         try ansi.clearScreen(stdout);
 
-        const charcols = try allocator.alloc(col.Column, cols);
+        var matrix: cm.CellMatrix = try cm.CellMatrix.init(
+            0,
+            0,
+            allocator,
+            ansi.AnsiColor{
+                .color = .green,
+            },
+        );
+
+        defer matrix.deinit(allocator);
+
+        var charcols: []col.Column = try allocator.alloc(col.Column, 0);
         defer allocator.free(charcols);
-        for (0.., charcols) |i, *c| {
-            c.* = col.Column.init(
-                i,
-                rng.random().intRangeAtMost(
-                    usize,
-                    0,
-                    20,
-                ),
-            );
-        }
 
         var input: u8 = 0;
 
@@ -65,7 +63,33 @@ pub fn main() !void {
         );
         defer io_thread.join();
 
+        var cols: u16 = 0;
+        var rows: u16 = 0;
+
         while (input != 'q') {
+            t = (try termsize.termSize(std.io.getStdOut())).?;
+            cols = terminfo.width;
+            rows = terminfo.height;
+
+            if ((cols != prev_cols) or (rows != prev_rows)) {
+                matrix.deinit(allocator);
+                allocator.free(charcols);
+
+                matrix = try cm.CellMatrix.init(rows, cols, allocator, ansi.AnsiColor{ .color = .green });
+
+                charcols = try allocator.alloc(col.Column, cols);
+                for (0.., charcols) |i, *c| {
+                    c.* = col.Column.init(
+                        i,
+                        rng.random().intRangeAtMost(
+                            usize,
+                            0,
+                            20,
+                        ),
+                    );
+                }
+            }
+
             try matrix.print(bufOut);
             try buffer.flush();
 
@@ -86,6 +110,9 @@ pub fn main() !void {
                     );
                 }
             }
+            prev_cols = cols;
+            prev_rows = rows;
+
             std.time.sleep(printDelay);
         }
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
