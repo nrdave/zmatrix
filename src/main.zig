@@ -74,8 +74,14 @@ pub fn main() !void {
             if ((cols != prev_cols) or (rows != prev_rows)) {
                 matrix.deinit(allocator);
                 allocator.free(charcols);
+                try ansi.clearScreen(stdout);
 
-                matrix = try cm.CellMatrix.init(rows, cols, allocator, ansi.AnsiColor{ .color = .green });
+                matrix = try cm.CellMatrix.init(
+                    rows,
+                    cols,
+                    allocator,
+                    ansi.AnsiColor{ .color = .green },
+                );
 
                 charcols = try allocator.alloc(col.Column, cols);
                 for (0.., charcols) |i, *c| {
@@ -104,8 +110,8 @@ pub fn main() !void {
                         i,
                         rng.random().intRangeAtMost(
                             usize,
-                            0,
-                            20,
+                            5,
+                            cols / 4,
                         ),
                     );
                 }
