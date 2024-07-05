@@ -31,12 +31,12 @@ pub fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column 
     const head_offset: isize = @bitCast(rng.intRangeAtMost(
         usize,
         0,
-        rows / 4,
+        rows / 8,
     ));
     const len = rng.intRangeAtMost(
         usize,
-        rows / 8,
         rows / 4,
+        rows / 2,
     );
     return Column.init(
         col,
