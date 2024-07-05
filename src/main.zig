@@ -85,13 +85,10 @@ pub fn main() !void {
 
                 charcols = try allocator.alloc(col.Column, cols);
                 for (0.., charcols) |i, *c| {
-                    c.* = col.Column.init(
+                    c.* = col.createRandomColumn(
                         i,
-                        rng.random().intRangeAtMost(
-                            usize,
-                            5,
-                            cols / 4,
-                        ),
+                        rows,
+                        rng.random(),
                     );
                 }
             }
@@ -105,14 +102,10 @@ pub fn main() !void {
                     try c.iterate(&matrix, char);
                 }
                 if (c.tail > matrix.num_rows) {
-                    const i = c.col;
-                    c.* = col.Column.init(
-                        i,
-                        rng.random().intRangeAtMost(
-                            usize,
-                            5,
-                            cols / 4,
-                        ),
+                    c.* = col.createRandomColumn(
+                        c.col,
+                        rows,
+                        rng.random(),
                     );
                 }
             }
