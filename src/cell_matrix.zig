@@ -21,8 +21,9 @@ pub const Cell = struct {
 };
 
 pub const CellMatrix = struct {
-    x0: usize = 0,
-    y0: usize = 0,
+    // ANSI cursor locations are 1-based i.e. 1 represents the first row/col
+    x0: usize = 1,
+    y0: usize = 1,
     num_rows: usize,
     num_cols: usize,
     color: ansi.ColorCode,
@@ -112,10 +113,11 @@ test "cell_matrix" {
         5,
         5,
         alloc,
-        ansi.AnsiColor{ .color = .blue },
+        .blue,
+        null,
     );
     x.setOrigin(60, 0);
-    try x.writeChar('c', 3, 3);
+    x.writeChar('c', 3, 3, null);
 
     const stdout = std.io.getStdOut().writer();
     try ansi.clearScreen(stdout);
