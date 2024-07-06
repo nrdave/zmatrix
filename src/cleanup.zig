@@ -5,8 +5,8 @@ const builtin = @import("builtin");
 
 pub const Cleanup = struct {
     var term_state: termctrl.TermStatus = undefined;
-    var input_handle: std.fs.File.Handle = std.io.getStdIn().handle;
-    var output: std.fs.File.Writer = std.io.getStdOut().writer();
+    var input_handle: std.fs.File.Handle = undefined;
+    var output: std.fs.File.Writer = undefined;
 
     pub fn init(
         t: termctrl.TermStatus,
@@ -17,9 +17,9 @@ pub const Cleanup = struct {
         input_handle = i;
         output = o;
         if (builtin.os.tag == .windows) {
-            std.os.windows.SetConsoleCtrlHandler(
+            try std.os.windows.SetConsoleCtrlHandler(
                 &Cleanup.windows_exit_handler,
-                std.os.windows.TRUE,
+                true,
             );
         } else {
             var sa: std.posix.Sigaction = .{
