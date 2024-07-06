@@ -3,13 +3,20 @@ const ansi = @import("ansi_term_codes.zig");
 
 pub const Cell = struct {
     char: u8,
+    color: ansi.ColorCode,
     updated: bool,
 
-    pub fn init(c: u8) Cell {
+    pub fn init(c: u8, color: ?ansi.ColorCode) Cell {
         return Cell{
             .char = c,
+            .color = color orelse .default,
             .updated = true,
         };
+    }
+
+    pub fn setColor(self: *Cell, color: ansi.ColorCode) void {
+        self.color = color;
+        self.updated = true;
     }
 };
 
@@ -18,11 +25,11 @@ pub const CellMatrix = struct {
     y0: usize = 0,
     num_rows: usize,
     num_cols: usize,
-    color: ansi.AnsiColor,
+    color: ansi.ColorCode,
 
     matrix: [][]Cell,
 
-    pub fn init(r: u32, c: u32, allocator: std.mem.Allocator, color: ansi.AnsiColor) !CellMatrix {
+    pub fn init(r: u32, c: u32, allocator: std.mem.Allocator, color: ansi.ColorCode) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
         const m = try allocator.alloc([]Cell, r);
         for (m) |*row| {
@@ -30,6 +37,7 @@ pub const CellMatrix = struct {
             for (row.*) |*cell| {
                 cell.* = Cell.init(
                     ' ',
+                    color,
                 );
             }
         }
@@ -41,23 +49,35 @@ pub const CellMatrix = struct {
         self.y0 = y;
     }
 
-    pub fn writeChar(self: CellMatrix, char: u8, x: usize, y: isize) void {
+    pub fn writeChar(self: CellMatrix, char: ?u8, x: usize, y: isize, color: ?ansi.ColorCode) void {
         const row: usize = @bitCast(y);
         const col = x;
 
         if (((row < self.matrix.len) and (row >= 0)) and (col < self.matrix[0].len)) {
-            self.matrix[row][col].char = char;
+            if (char) |c|
+                self.matrix[row][col].char = c;
+            self.matrix[row][col].color = color orelse self.color;
             self.matrix[row][col].updated = true;
         }
     }
 
     pub fn print(self: CellMatrix, writer: anytype) !void {
-        try ansi.setColor(self.color, writer);
         for (0..self.num_rows) |row| {
             for (0..self.num_cols) |col| {
                 if (self.matrix[row][col].updated == true) {
-                    try ansi.setCursorPos(writer, row + self.y0, col + self.x0);
-                    try writer.print("{c}", .{self.matrix[row][col].char});
+                    try ansi.setForegroundColor(
+                        writer,
+                        self.matrix[row][col].color,
+                    );
+                    try ansi.setCursorPos(
+                        writer,
+                        row + self.y0,
+                        col + self.x0,
+                    );
+                    try writer.print(
+                        "{c}",
+                        .{self.matrix[row][col].char},
+                    );
                     self.matrix[row][col].updated = false;
                 }
             }

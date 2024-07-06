@@ -18,12 +18,13 @@ pub const Column = struct {
     }
 
     pub fn iterate(self: *Column, matrix: *cm.CellMatrix, new_char: u8) void {
-        matrix.writeChar(' ', self.col, self.tail);
+        matrix.writeChar(' ', self.col, self.tail, null);
+        matrix.writeChar(null, self.col, self.head, matrix.color);
 
         self.head += 1;
         self.tail += 1;
 
-        matrix.writeChar(new_char, self.col, @bitCast(self.head));
+        matrix.writeChar(new_char, self.col, self.head, .bright_white);
     }
 };
 

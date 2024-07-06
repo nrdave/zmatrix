@@ -2,7 +2,7 @@ const std = @import("std");
 
 const esc = std.ascii.control_code.esc;
 
-pub const AnsiColorCode = enum(u8) {
+pub const ColorCode = enum(u8) {
     black = 30,
     red = 31,
     green = 32,
@@ -24,7 +24,7 @@ pub const AnsiColorCode = enum(u8) {
 
 pub fn setForegroundColor(
     writer: anytype,
-    code: AnsiColorCode,
+    code: ColorCode,
 ) !void {
     try writer.print("{c}[{d}m", .{
         esc,
@@ -33,7 +33,7 @@ pub fn setForegroundColor(
 }
 pub fn setBackgroundColor(
     writer: anytype,
-    code: AnsiColorCode,
+    code: ColorCode,
 ) !void {
     try writer.print("{c}[{d}m", .{
         esc,

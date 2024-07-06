@@ -52,9 +52,7 @@ pub fn main() !void {
             0,
             0,
             allocator,
-            ansi.AnsiColor{
-                .color = .green,
-            },
+            .green,
         );
 
         defer matrix.deinit(allocator);
@@ -96,7 +94,7 @@ pub fn main() !void {
                     rows,
                     cols,
                     allocator,
-                    ansi.AnsiColor{ .color = .green },
+                    .green,
                 );
                 charstrs = try allocator.alloc(col.ColumnList, cols);
 
