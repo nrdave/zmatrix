@@ -77,6 +77,9 @@ pub fn main() !void {
 
             if ((cols != prev_cols) or (rows != prev_rows)) {
                 matrix.deinit(allocator);
+                for (charstrs) |*str| {
+                    str.deinit();
+                }
                 allocator.free(charstrs);
                 try ansi.clearScreen(stdout);
 
