@@ -35,7 +35,6 @@ pub fn main() !void {
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
 
         var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
-        var char = rng.random().intRangeAtMost(u8, 0, 127);
 
         try ansi.hideCursor(stdout);
         try ansi.clearScreen(stdout);
@@ -51,8 +50,13 @@ pub fn main() !void {
 
         defer matrix.deinit(allocator);
 
-        var charcols: []col.Column = try allocator.alloc(col.Column, 0);
-        defer allocator.free(charcols);
+        var charstrs = try allocator.alloc(col.ColumnList, 0);
+        defer {
+            for (charstrs) |str| {
+                str.cols.deinit();
+            }
+            allocator.free(charstrs);
+        }
 
         var input: u8 = 0;
 
@@ -73,7 +77,7 @@ pub fn main() !void {
 
             if ((cols != prev_cols) or (rows != prev_rows)) {
                 matrix.deinit(allocator);
-                allocator.free(charcols);
+                allocator.free(charstrs);
                 try ansi.clearScreen(stdout);
 
                 matrix = try cm.CellMatrix.init(
@@ -82,32 +86,18 @@ pub fn main() !void {
                     allocator,
                     ansi.AnsiColor{ .color = .green },
                 );
+                charstrs = try allocator.alloc(col.ColumnList, cols);
 
-                charcols = try allocator.alloc(col.Column, cols);
-                for (0.., charcols) |i, *c| {
-                    c.* = col.createRandomColumn(
-                        i,
-                        rows,
-                        rng.random(),
-                    );
+                for (charstrs, 0..) |*c, i| {
+                    c.* = col.ColumnList.init(allocator, i);
                 }
             }
 
             try matrix.print(bufOut);
             try buffer.flush();
 
-            for (charcols) |*c| {
-                char = rng.random().int(u8);
-                if (std.ascii.isPrint(char)) {
-                    try c.iterate(&matrix, char);
-                }
-                if (c.tail > matrix.num_rows) {
-                    c.* = col.createRandomColumn(
-                        c.col,
-                        rows,
-                        rng.random(),
-                    );
-                }
+            for (charstrs) |*c| {
+                try c.update(&matrix, rng.random());
             }
             prev_cols = cols;
             prev_rows = rows;

@@ -17,13 +17,13 @@ pub const Column = struct {
         };
     }
 
-    pub fn iterate(self: *Column, matrix: *cm.CellMatrix, newChar: u8) !void {
+    pub fn iterate(self: *Column, matrix: *cm.CellMatrix, new_char: u8) void {
         matrix.writeChar(' ', self.col, self.tail);
 
         self.head += 1;
         self.tail += 1;
 
-        matrix.writeChar(newChar, self.col, @bitCast(self.head));
+        matrix.writeChar(new_char, self.col, @bitCast(self.head));
     }
 };
 
@@ -44,3 +44,51 @@ pub fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column 
         len,
     );
 }
+
+pub const ColumnList = struct {
+    cols: std.ArrayList(Column),
+    column: usize,
+    counter: u8,
+    iterate_count: u8 = 60,
+
+    pub fn init(allocator: std.mem.Allocator, column: usize) ColumnList {
+        const c = ColumnList{
+            .column = column,
+            .counter = 0,
+            .cols = std.ArrayList(Column).init(allocator),
+        };
+
+        return c;
+    }
+
+    pub fn update(
+        self: *ColumnList,
+        matrix: *cm.CellMatrix,
+        rng: std.rand.Random,
+    ) !void {
+        self.counter += 1;
+        var char: u8 = '0';
+        if (self.counter >= self.iterate_count) {
+            for (self.cols.items, 0..) |*col, i| {
+                // Printable ASCII chars range from 32 to 127, but 32 is
+                // space and 127 is delete. The other chars are visible
+                char = rng.intRangeLessThan(
+                    u8,
+                    33,
+                    126,
+                );
+                col.iterate(matrix, char);
+
+                if (col.tail > matrix.num_rows) {
+                    _ = self.cols.swapRemove(i);
+                } else if (col.tail > matrix.num_rows / 4) {
+                    try self.cols.append(createRandomColumn(
+                        self.column,
+                        matrix.num_rows,
+                        rng,
+                    ));
+                }
+            }
+        }
+    }
+};
