@@ -58,12 +58,12 @@ pub fn main() !void {
 
         defer matrix.deinit(allocator);
 
-        var charstrs = try allocator.alloc(col.ColumnList, 0);
+        var charstrs = std.ArrayList(col.ColumnList).init(allocator);
         defer {
-            for (charstrs) |*str| {
-                str.deinit();
+            for (charstrs.items) |*c| {
+                c.deinit();
             }
-            allocator.free(charstrs);
+            charstrs.deinit();
         }
 
         var input: u8 = 0;
@@ -85,10 +85,11 @@ pub fn main() !void {
 
             if ((cols != prev_cols) or (rows != prev_rows)) {
                 matrix.deinit(allocator);
-                for (charstrs) |*str| {
-                    str.deinit();
+                for (charstrs.items) |*c| {
+                    c.deinit();
                 }
-                allocator.free(charstrs);
+                charstrs.deinit();
+
                 try ansi.clearScreen(stdout);
 
                 matrix = try cm.CellMatrix.init(
@@ -98,17 +99,19 @@ pub fn main() !void {
                     .green,
                     null,
                 );
-                charstrs = try allocator.alloc(col.ColumnList, cols);
+                charstrs = std.ArrayList(col.ColumnList).init(allocator);
 
-                for (charstrs, 0..) |*c, i| {
-                    c.* = col.ColumnList.init(allocator, i);
+                for (0..cols - 2) |i| {
+                    if (i % 2 == 1) {
+                        try charstrs.append(col.ColumnList.init(allocator, i));
+                    }
                 }
             }
 
             try matrix.print(bufOut);
             try buffer.flush();
 
-            for (charstrs) |*c| {
+            for (charstrs.items) |*c| {
                 try c.update(&matrix, rng.random());
             }
             prev_cols = cols;
