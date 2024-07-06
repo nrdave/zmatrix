@@ -101,7 +101,7 @@ pub fn main() !void {
                 );
                 charstrs = std.ArrayList(col.ColumnList).init(allocator);
 
-                for (0..cols - 2) |i| {
+                for (0..cols) |i| {
                     if (i % 2 == 0) {
                         try charstrs.append(col.ColumnList.init(allocator, i));
                     }
