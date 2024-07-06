@@ -63,6 +63,18 @@ pub const CellMatrix = struct {
         self.y0 = y;
     }
 
+    pub fn setColor(self: *CellMatrix, color: ansi.ColorCode) void {
+        if (self.color != color) {
+            self.color = color;
+            for (self.matrix) |row| {
+                for (row) |*cell| {
+                    cell.color = color;
+                    cell.updated = true;
+                }
+            }
+        }
+    }
+
     pub fn writeChar(self: CellMatrix, char: ?u8, x: usize, y: isize, color: ?ansi.ColorCode) void {
         const row: usize = @bitCast(y);
         const col = x;

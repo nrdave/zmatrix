@@ -111,6 +111,31 @@ pub fn main() !void {
             try matrix.print(bufOut);
             try buffer.flush();
 
+            switch (input) {
+                '!' => {
+                    matrix.setColor(.red);
+                },
+                '@' => {
+                    matrix.setColor(.green);
+                },
+                '#' => {
+                    matrix.setColor(.yellow);
+                },
+                '$' => {
+                    matrix.setColor(.blue);
+                },
+                '%' => {
+                    matrix.setColor(.magenta);
+                },
+                '^' => {
+                    matrix.setColor(.cyan);
+                },
+                '&' => {
+                    matrix.setColor(.white);
+                },
+                else => {},
+            }
+
             for (charstrs.items) |*c| {
                 try c.update(&matrix, rng.random());
             }
