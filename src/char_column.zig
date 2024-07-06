@@ -35,8 +35,8 @@ pub fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column 
     ));
     const len = rng.intRangeAtMost(
         usize,
-        rows / 4,
-        rows / 2,
+        rows / 8,
+        rows,
     );
     return Column.init(
         col,
@@ -49,7 +49,7 @@ pub const ColumnList = struct {
     cols: std.ArrayList(Column),
     column: usize,
     counter: u8,
-    iterate_count: u8 = 5,
+    iterate_count: u8 = 3,
 
     pub fn init(allocator: std.mem.Allocator, column: usize) ColumnList {
         const c = ColumnList{
