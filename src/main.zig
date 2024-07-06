@@ -53,6 +53,7 @@ pub fn main() !void {
             0,
             allocator,
             .green,
+            null,
         );
 
         defer matrix.deinit(allocator);
@@ -95,6 +96,7 @@ pub fn main() !void {
                     cols,
                     allocator,
                     .green,
+                    null,
                 );
                 charstrs = try allocator.alloc(col.ColumnList, cols);
 

@@ -26,10 +26,17 @@ pub const CellMatrix = struct {
     num_rows: usize,
     num_cols: usize,
     color: ansi.ColorCode,
+    leading_color: ansi.ColorCode,
 
     matrix: [][]Cell,
 
-    pub fn init(r: u32, c: u32, allocator: std.mem.Allocator, color: ansi.ColorCode) !CellMatrix {
+    pub fn init(
+        r: u32,
+        c: u32,
+        allocator: std.mem.Allocator,
+        color: ansi.ColorCode,
+        leading_color: ?ansi.ColorCode,
+    ) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
         const m = try allocator.alloc([]Cell, r);
         for (m) |*row| {
@@ -41,7 +48,13 @@ pub const CellMatrix = struct {
                 );
             }
         }
-        return CellMatrix{ .num_rows = r, .num_cols = c, .matrix = m, .color = color };
+        return CellMatrix{
+            .num_rows = r,
+            .num_cols = c,
+            .matrix = m,
+            .color = color,
+            .leading_color = leading_color orelse .white,
+        };
     }
 
     pub fn setOrigin(self: *CellMatrix, x: usize, y: usize) void {

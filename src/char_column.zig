@@ -24,7 +24,7 @@ pub const Column = struct {
         self.head += 1;
         self.tail += 1;
 
-        matrix.writeChar(new_char, self.col, self.head, .bright_white);
+        matrix.writeChar(new_char, self.col, self.head, matrix.leading_color);
     }
 };
 
