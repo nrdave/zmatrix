@@ -27,16 +27,34 @@ pub const Column = struct {
     }
 };
 
-pub fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column {
+fn getRandNormalInt(rng: std.rand.Random, comptime T: type, min: T, max: T, concentration: f64) T {
+    const min_float: f64 = @floatFromInt(min);
+    const max_float: f64 = @floatFromInt(max);
+
+    const mean: f64 = (max_float - min_float) / 2 + min_float;
+    const stddev: f64 = (max_float - min_float) / (2 * concentration); // range of four standard deviations
+    var float: f64 = rng.floatNorm(f64) * stddev + mean;
+    if (float < min_float) {
+        float = min_float;
+    } else if (float > max_float) {
+        float = max_float;
+    }
+    const num: T = @intFromFloat(float);
+    return num;
+}
+
+fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column {
     const head_offset: isize = @bitCast(rng.intRangeAtMost(
         usize,
         0,
-        rows / 2,
-    ));
-    const len = rng.intRangeAtMost(
-        usize,
-        rows / 8,
         rows,
+    ));
+    const len = getRandNormalInt(
+        rng,
+        usize,
+        rows / 16,
+        rows,
+        2,
     );
     return Column.init(
         col,
@@ -67,12 +85,25 @@ pub const ColumnList = struct {
     ) !void {
         self.counter += 1;
         var char: u8 = '0';
+        if (self.cols.items.len == 0)
+            try self.cols.append(createRandomColumn(
+                self.column,
+                matrix.num_rows,
+                rng,
+            ));
+
         if (self.counter >= self.iterate_count) {
             // This method of removing elements from an ArrayList comes from jdh in this livestream:
             // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609
             // That said, I think I did it a tiny bit better (no struct member var)
             var i: usize = 0;
             var add_new_col = true;
+            const new_char_row = rng.intRangeAtMost(
+                usize,
+                matrix.num_rows / 8,
+                matrix.num_rows,
+            );
+
             while (i < self.cols.items.len) {
                 const col = &self.cols.items[i];
                 var remove = false;
@@ -87,7 +118,7 @@ pub const ColumnList = struct {
 
                 if (col.tail >= matrix.num_rows) {
                     remove = true;
-                } else if (col.tail < matrix.num_rows / 4) {
+                } else if (col.tail < new_char_row) {
                     add_new_col = false;
                 }
                 if (remove) {
@@ -102,12 +133,6 @@ pub const ColumnList = struct {
                     rng,
                 ));
         }
-        if (self.cols.items.len == 0)
-            try self.cols.append(createRandomColumn(
-                self.column,
-                matrix.num_rows,
-                rng,
-            ));
     }
     pub fn deinit(self: *ColumnList) void {
         self.cols.deinit();
