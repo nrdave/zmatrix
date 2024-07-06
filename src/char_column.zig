@@ -31,7 +31,7 @@ pub fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column 
     const head_offset: isize = @bitCast(rng.intRangeAtMost(
         usize,
         0,
-        rows / 8,
+        rows / 2,
     ));
     const len = rng.intRangeAtMost(
         usize,
@@ -49,7 +49,7 @@ pub const ColumnList = struct {
     cols: std.ArrayList(Column),
     column: usize,
     counter: u8,
-    iterate_count: u8 = 60,
+    iterate_count: u8 = 5,
 
     pub fn init(allocator: std.mem.Allocator, column: usize) ColumnList {
         const c = ColumnList{
@@ -57,7 +57,6 @@ pub const ColumnList = struct {
             .counter = 0,
             .cols = std.ArrayList(Column).init(allocator),
         };
-
         return c;
     }
 
@@ -66,7 +65,7 @@ pub const ColumnList = struct {
         matrix: *cm.CellMatrix,
         rng: std.rand.Random,
     ) !void {
-        self.counter += 1;
+        self.counter +%= 1;
         var char: u8 = '0';
         if (self.counter >= self.iterate_count) {
             for (self.cols.items, 0..) |*col, i| {
@@ -90,5 +89,8 @@ pub const ColumnList = struct {
                 }
             }
         }
+    }
+    pub fn deinit(self: *ColumnList) void {
+        self.cols.deinit();
     }
 };

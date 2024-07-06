@@ -52,8 +52,8 @@ pub fn main() !void {
 
         var charstrs = try allocator.alloc(col.ColumnList, 0);
         defer {
-            for (charstrs) |str| {
-                str.cols.deinit();
+            for (charstrs) |*str| {
+                str.deinit();
             }
             allocator.free(charstrs);
         }
@@ -106,7 +106,7 @@ pub fn main() !void {
         }
         try cleanup(std.io.getStdIn().handle, stdout, orig_term_state);
     } else {
-        std.debug.print("Unable to start zmatrix: Could not determine terminal size", .{});
+        std.debug.print("Unable to start zmatrix: Could not determine terminal size\n", .{});
     }
 }
 

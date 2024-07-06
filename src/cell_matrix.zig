@@ -45,7 +45,7 @@ pub const CellMatrix = struct {
         const row: usize = @bitCast(y);
         const col = x;
 
-        if (((y < self.matrix.len) and (y > 0)) and (x < self.matrix[0].len)) {
+        if (((row < self.matrix.len) and (row >= 0)) and (col < self.matrix[0].len)) {
             self.matrix[row][col].char = char;
             self.matrix[row][col].updated = true;
         }
