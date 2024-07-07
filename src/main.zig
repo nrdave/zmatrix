@@ -14,13 +14,46 @@ fn getInput(reader: std.fs.File.Reader, char: *u8) !void {
     }
 }
 
+fn Delay() type {
+    const updates_per_sec = [_]f64{
+        20.0,
+        40.0,
+        60.0,
+        80.0,
+        100.0,
+        120.0,
+        160.0,
+        200.0,
+        250.0,
+        500.0,
+    };
+    const ns_per_sec = 1_000_000_000;
+    var fields: [updates_per_sec.len]std.builtin.Type.EnumField = undefined;
+    var tmp_var: u32 = 0;
+    for (updates_per_sec, 0..) |ups, i| {
+        tmp_var = @intFromFloat(ups);
+        fields[i] = .{
+            .name = "UPS_" ++ std.fmt.comptimePrint("{d}", .{tmp_var}),
+            .value = @intFromFloat(ns_per_sec / ups),
+        };
+    }
+    return @Type(.{
+        .Enum = .{
+            .tag_type = u64,
+            .fields = fields[0..],
+            .decls = &[_]std.builtin.Type.Declaration{},
+            .is_exhaustive = true,
+        },
+    });
+}
+
+var printDelay: Delay() = .UPS_60;
+
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
 
     var t = try termsize.termSize(std.io.getStdOut());
-
-    const printDelay = 16_666_667; // Approximately the number of nanoseconds to delay to get 60 FPS
 
     if (t) |*terminfo| {
         // If the termsize is available, create a cell matrix of that size
@@ -133,6 +166,37 @@ pub fn main() !void {
                 '&' => {
                     matrix.setColor(.white);
                 },
+                '0' => {
+                    printDelay = .UPS_500;
+                },
+                '1' => {
+                    printDelay = .UPS_250;
+                },
+                '2' => {
+                    printDelay = .UPS_200;
+                },
+                '3' => {
+                    printDelay = .UPS_160;
+                },
+                '4' => {
+                    printDelay = .UPS_120;
+                },
+                '5' => {
+                    printDelay = .UPS_100;
+                },
+                '6' => {
+                    printDelay = .UPS_80;
+                },
+                '7' => {
+                    printDelay = .UPS_60;
+                },
+                '8' => {
+                    printDelay = .UPS_40;
+                },
+                '9' => {
+                    printDelay = .UPS_20;
+                },
+
                 else => {},
             }
 
@@ -142,7 +206,7 @@ pub fn main() !void {
             prev_cols = cols;
             prev_rows = rows;
 
-            std.time.sleep(printDelay);
+            std.time.sleep(@intFromEnum(printDelay));
         }
         try Cleanup.cleanup();
     } else {
