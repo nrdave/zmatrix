@@ -11,10 +11,13 @@ color or falling speed of the characters.
 
 ## Dependencies
 
-At the moment, zmatrix only depends on the
-[zig-termsize](https://github.com/softprops/zig-termsize) library for
-determining the terminal size regardless of platform. It's simple, but why
-reinvent the wheel.
+zmatrix depends on:
+- [zig-termsize](https://github.com/softprops/zig-termsize): a library for
+   determining the terminal size regardless of platform. It's simple, but why
+   reinvent the wheel.
+- [parg](https://github.com/judofyr/parg): "parg is a lightweight argument
+   parser for Zig which focuses on a single task: Parsing command-line
+   arguments into positional arguments and long/short flags" - parg README
 
 Unlike cmatrix, zmatrix does not depend on ncurses. This was done for a few
 reasons, including

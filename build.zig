@@ -21,6 +21,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     }).module("termsize");
 
+    const parg = b.dependency("parg", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("parg");
+
     const exe = b.addExecutable(.{
         .name = "zmatrix",
         // In this case the main source file is merely a path, however, in more
@@ -31,6 +36,7 @@ pub fn build(b: *std.Build) void {
     });
     // 👇 add the termsize module to executable
     exe.root_module.addImport("termsize", termsize);
+    exe.root_module.addImport("parg", parg);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
