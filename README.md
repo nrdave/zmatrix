@@ -5,8 +5,9 @@ zmatrix is a (partial) clone of the popular
 [Zig](https://ziglang.org/). It's currently just a project for me to learn
 Zig as a language, but feel free to contribute any ideas/code.
 
-Right now, zmatrix is still in development. It has yet to reach even the basic
-functionality of cmatrix.
+As of 2024-06-14, zmatrix replicates the core functionality of cmatrix. It
+prints characters falling down a terminal window, and a user can change the
+color or falling speed of the characters.
 
 ## Dependencies
 
