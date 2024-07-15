@@ -5,6 +5,7 @@ const col = @import("char_column.zig");
 const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
 const cleanutils = @import("cleanup.zig");
+const parg = @import("parg");
 
 const Cleanup = cleanutils.Cleanup;
 
@@ -54,6 +55,8 @@ pub fn main() !void {
     const stdin = std.io.getStdIn().reader();
 
     var t = try termsize.termSize(std.io.getStdOut());
+
+    var async_enabled = false;
 
     if (t) |*terminfo| {
         // If the termsize is available, create a cell matrix of that size
@@ -111,6 +114,23 @@ pub fn main() !void {
         var cols: u16 = 0;
         var rows: u16 = 0;
 
+        var p = try parg.parseProcess(allocator, .{});
+        defer p.deinit();
+
+        // Skip executable name or panic if it's not found
+        _ = p.nextValue() orelse @panic("no executable name");
+
+        while (p.next()) |token| {
+            switch (token) {
+                .flag => |flag| {
+                    if (flag.isShort("a"))
+                        async_enabled = true;
+                },
+                .arg => {},
+                .unexpected_value => @panic("unexpected value"),
+            }
+        }
+
         while (input != 'q') {
             t = (try termsize.termSize(std.io.getStdOut())).?;
             cols = terminfo.width;
@@ -136,7 +156,14 @@ pub fn main() !void {
 
                 for (0..cols) |i| {
                     if (i % 2 == 0) {
-                        try charstrs.append(col.ColumnList.init(allocator, i));
+                        try charstrs.append(col.ColumnList.init(
+                            allocator,
+                            i,
+                            if (async_enabled)
+                                rng.random().intRangeAtMost(u8, 3, 6)
+                            else
+                                null,
+                        ));
                     }
                 }
             }

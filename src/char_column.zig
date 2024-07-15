@@ -70,11 +70,14 @@ pub const ColumnList = struct {
     counter: u8,
     iterate_count: u8 = 3,
 
-    pub fn init(allocator: std.mem.Allocator, column: usize) ColumnList {
+    const default_iterate_count = 3;
+
+    pub fn init(allocator: std.mem.Allocator, column: usize, iter_cnt: ?u8) ColumnList {
         const c = ColumnList{
             .column = column,
             .counter = 0,
             .cols = std.ArrayList(Column).init(allocator),
+            .iterate_count = iter_cnt orelse default_iterate_count,
         };
         return c;
     }
