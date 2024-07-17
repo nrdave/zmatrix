@@ -22,6 +22,33 @@ pub const ColorCode = enum(u8) {
     bright_white = 97,
 };
 
+pub const GraphicsMode = enum(u8) {
+    bold = 1,
+    dim = 2,
+    italic = 3,
+    underline = 4,
+    blinking = 5,
+    inverse = 7,
+    hidden = 8,
+    strikethrough = 9,
+};
+
+pub fn setMode(writer: anytype, mode: GraphicsMode) !void {
+    try writer.print("{c}[{d}m", .{
+        esc,
+        @intFromEnum(mode),
+    });
+}
+
+pub fn clearMode(writer: anytype, mode: GraphicsMode) !void {
+    var clear_int = @intFromEnum(mode) + 21;
+    if (mode == .blinking)
+        clear_int -= 1;
+    try writer.print("{c}[{d}m", .{
+        esc,
+        clear_int,
+    });
+}
 pub fn setForegroundColor(
     writer: anytype,
     code: ColorCode,
@@ -87,4 +114,12 @@ test "color_change" {
     try writer.print("{c}\n", .{'F'});
 
     try resetCodes(writer);
+}
+
+test "graphics_modes" {
+    const writer = std.io.getStdOut().writer();
+
+    try setMode(writer, .bold);
+    try writer.writeAll("hola\n");
+    try clearMode(writer, .bold);
 }
