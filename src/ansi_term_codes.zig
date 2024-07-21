@@ -54,7 +54,7 @@ pub const GraphicsModes = packed struct {
 
     const Self = @This();
 
-    pub fn updateGraphicsModes(self: *GraphicsModes, writer: anytype) !void {
+    pub fn setModes(self: *GraphicsModes, writer: anytype) !void {
         // Handle bold and dim differently because the clear code for both is
         // the same. WHYYYYYY!
         if (!(self.bold and self.dim))
@@ -150,8 +150,8 @@ test "graphics_modes" {
     var g = GraphicsModes{};
 
     g.bold = true;
-    try g.updateGraphicsModes(writer);
+    try g.setModes(writer);
     _ = try writer.write("hola\n");
     g.bold = false;
-    try g.updateGraphicsModes(writer);
+    try g.setModes(writer);
 }

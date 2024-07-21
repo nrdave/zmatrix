@@ -4,12 +4,14 @@ const ansi = @import("ansi_term_codes.zig");
 pub const Cell = struct {
     char: u8,
     color: ansi.ColorCode,
+    modes: ansi.GraphicsModes,
     updated: bool,
 
     pub fn init(c: u8, color: ?ansi.ColorCode) Cell {
         return Cell{
             .char = c,
             .color = color orelse .default,
+            .modes = .{},
             .updated = true,
         };
     }
@@ -17,6 +19,13 @@ pub const Cell = struct {
     pub fn setColor(self: *Cell, color: ansi.ColorCode) void {
         self.color = color;
         self.updated = true;
+    }
+
+    pub fn print(self: *Cell, writer: anytype) !void {
+        try ansi.setForegroundColor(writer, self.color);
+        try self.modes.setModes(writer);
+        try writer.print("{c}", .{self.char});
+        self.updated = false;
     }
 };
 
@@ -88,23 +97,15 @@ pub const CellMatrix = struct {
     }
 
     pub fn print(self: CellMatrix, writer: anytype) !void {
-        for (0..self.num_rows) |row| {
-            for (0..self.num_cols) |col| {
-                if (self.matrix[row][col].updated == true) {
-                    try ansi.setForegroundColor(
-                        writer,
-                        self.matrix[row][col].color,
-                    );
+        for (self.matrix, 0..) |rows, r| {
+            for (rows, 0..) |*cell, c| {
+                if (cell.updated == true) {
                     try ansi.setCursorPos(
                         writer,
-                        row + self.y0,
-                        col + self.x0,
+                        r + self.y0,
+                        c + self.x0,
                     );
-                    try writer.print(
-                        "{c}",
-                        .{self.matrix[row][col].char},
-                    );
-                    self.matrix[row][col].updated = false;
+                    try cell.print(writer);
                 }
             }
         }
