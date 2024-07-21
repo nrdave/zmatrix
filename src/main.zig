@@ -172,10 +172,8 @@ pub fn main() !void {
                         try charstrs.append(col.ColumnList.init(
                             allocator,
                             i,
-                            if (flags.async_cols)
-                                rng.random().intRangeAtMost(u8, 3, 6)
-                            else
-                                null,
+                            flags,
+                            &rng.random(),
                         ));
                     }
                 }
@@ -241,7 +239,7 @@ pub fn main() !void {
             }
 
             for (charstrs.items) |*c| {
-                try c.update(&matrix, rng.random());
+                try c.update(&matrix);
             }
             prev_cols = cols;
             prev_rows = rows;

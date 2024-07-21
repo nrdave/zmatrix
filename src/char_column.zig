@@ -1,5 +1,6 @@
 const std = @import("std");
 const cm = @import("cell_matrix.zig");
+const options = @import("options.zig");
 
 pub const Column = struct {
     col: usize,
@@ -28,7 +29,7 @@ pub const Column = struct {
     }
 };
 
-fn getRandNormalInt(rng: std.rand.Random, comptime T: type, min: T, max: T, concentration: f64) T {
+fn getRandNormalInt(rng: std.Random, comptime T: type, min: T, max: T, concentration: f64) T {
     const min_float: f64 = @floatFromInt(min);
     const max_float: f64 = @floatFromInt(max);
 
@@ -44,14 +45,14 @@ fn getRandNormalInt(rng: std.rand.Random, comptime T: type, min: T, max: T, conc
     return num;
 }
 
-fn createRandomColumn(col: usize, rows: usize, rng: std.rand.Random) Column {
+fn createRandomColumn(col: usize, rows: usize, rng: *const std.Random) Column {
     const head_offset: isize = @bitCast(rng.intRangeAtMost(
         usize,
         0,
         rows,
     ));
     const len = getRandNormalInt(
-        rng,
+        rng.*,
         usize,
         rows / 16,
         rows,
@@ -68,16 +69,27 @@ pub const ColumnList = struct {
     cols: std.ArrayList(Column),
     column: usize,
     counter: u8,
-    iterate_count: u8 = 3,
+    iterate_count: u8,
+    rng: *const std.Random,
 
     const default_iterate_count = 3;
 
-    pub fn init(allocator: std.mem.Allocator, column: usize, iter_cnt: ?u8) ColumnList {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        column: usize,
+        flags: options.Flags,
+        rng: *const std.Random,
+    ) ColumnList {
         const c = ColumnList{
             .column = column,
             .counter = 0,
             .cols = std.ArrayList(Column).init(allocator),
-            .iterate_count = iter_cnt orelse default_iterate_count,
+            .iterate_count = if (flags.async_cols) rng.intRangeAtMost(
+                u8,
+                ColumnList.default_iterate_count,
+                ColumnList.default_iterate_count * 2,
+            ) else default_iterate_count,
+            .rng = rng,
         };
         return c;
     }
@@ -85,7 +97,6 @@ pub const ColumnList = struct {
     pub fn update(
         self: *ColumnList,
         matrix: *cm.CellMatrix,
-        rng: std.rand.Random,
     ) !void {
         self.counter += 1;
         var char: u8 = '0';
@@ -93,13 +104,13 @@ pub const ColumnList = struct {
             try self.cols.append(createRandomColumn(
                 self.column,
                 matrix.num_rows,
-                rng,
+                self.rng,
             ));
 
         if (self.counter >= self.iterate_count) {
             var i: usize = 0;
             var add_new_col = true;
-            const new_char_row = rng.intRangeAtMost(
+            const new_char_row = self.rng.intRangeAtMost(
                 usize,
                 matrix.num_rows / 8,
                 matrix.num_rows,
@@ -110,7 +121,7 @@ pub const ColumnList = struct {
                 var remove = false;
                 // Printable ASCII chars range from 32 to 127, but 32 is
                 // space and 127 is delete. The other chars are visible
-                char = rng.intRangeLessThan(
+                char = self.rng.intRangeLessThan(
                     u8,
                     33,
                     126,
@@ -134,7 +145,7 @@ pub const ColumnList = struct {
                 try self.cols.append(createRandomColumn(
                     self.column,
                     matrix.num_rows,
-                    rng,
+                    self.rng,
                 ));
         }
     }
