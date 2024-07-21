@@ -84,7 +84,14 @@ pub const CellMatrix = struct {
         }
     }
 
-    pub fn writeChar(self: CellMatrix, char: ?u8, x: usize, y: isize, color: ?ansi.ColorCode) void {
+    pub fn writeChar(
+        self: CellMatrix,
+        char: ?u8,
+        x: usize,
+        y: isize,
+        color: ?ansi.ColorCode,
+        modes: ?ansi.GraphicsModes,
+    ) void {
         const row: usize = @bitCast(y);
         const col = x;
 
@@ -92,6 +99,7 @@ pub const CellMatrix = struct {
             if (char) |c|
                 self.matrix[row][col].char = c;
             self.matrix[row][col].color = color orelse self.color;
+            self.matrix[row][col].modes = modes orelse .{};
             self.matrix[row][col].updated = true;
         }
     }

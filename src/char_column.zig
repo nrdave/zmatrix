@@ -1,4 +1,5 @@
 const std = @import("std");
+const ansi = @import("ansi_term_codes.zig");
 const cm = @import("cell_matrix.zig");
 const options = @import("options.zig");
 
@@ -18,14 +19,32 @@ pub const Column = struct {
         };
     }
 
-    pub fn iterate(self: *Column, matrix: *cm.CellMatrix, new_char: u8) void {
-        matrix.writeChar(' ', self.col, self.tail, null);
-        matrix.writeChar(null, self.col, self.head, matrix.color);
+    pub fn iterate(
+        self: *Column,
+        matrix: *cm.CellMatrix,
+        new_char: u8,
+        last_color: ?ansi.ColorCode,
+        modes: ?ansi.GraphicsModes,
+    ) void {
+        matrix.writeChar(' ', self.col, self.tail, null, null);
+        matrix.writeChar(
+            null,
+            self.col,
+            self.head,
+            last_color orelse null,
+            null,
+        );
 
         self.head += 1;
         self.tail += 1;
 
-        matrix.writeChar(new_char, self.col, self.head, matrix.leading_color);
+        matrix.writeChar(
+            new_char,
+            self.col,
+            self.head,
+            matrix.leading_color,
+            modes orelse null,
+        );
     }
 };
 
@@ -70,6 +89,7 @@ pub const ColumnList = struct {
     column: usize,
     counter: u8,
     iterate_count: u8,
+    flags: options.Flags,
     rng: *const std.Random,
 
     const default_iterate_count = 3;
@@ -89,6 +109,7 @@ pub const ColumnList = struct {
                 ColumnList.default_iterate_count,
                 ColumnList.default_iterate_count * 2,
             ) else default_iterate_count,
+            .flags = flags,
             .rng = rng,
         };
         return c;
@@ -126,7 +147,7 @@ pub const ColumnList = struct {
                     33,
                     126,
                 );
-                col.iterate(matrix, char);
+                col.iterate(matrix, char, null, null);
 
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:
                 // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609
