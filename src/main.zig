@@ -79,6 +79,10 @@ pub fn main() !void {
             .flag => |flag| {
                 if (flag.isShort("a")) {
                     flags.async_cols = true;
+                } else if (flag.isShort("B")) {
+                    flags.all_bold = true;
+                } else if (flag.isShort("b")) {
+                    flags.bold = true;
                 } else {
                     inline for (options.help_str) |line| {
                         try stdout.print("{s}\n", .{line});

@@ -94,6 +94,9 @@ pub const ColumnList = struct {
 
     const default_iterate_count = 3;
 
+    // Odds out of 10 that a given char is bold (assuming the bold flag is set)
+    const bold_odds = 3;
+
     pub fn init(
         allocator: std.mem.Allocator,
         column: usize,
@@ -147,7 +150,16 @@ pub const ColumnList = struct {
                     33,
                     126,
                 );
-                col.iterate(matrix, char, null, null);
+                var g = ansi.GraphicsModes{};
+
+                // Handle bold character flags
+                if (self.flags.all_bold) {
+                    g.bold = true;
+                } else if (self.flags.bold) {
+                    if (self.rng.intRangeAtMost(u8, 0, 10) < bold_odds)
+                        g.bold = true;
+                }
+                col.iterate(matrix, char, null, g);
 
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:
                 // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609

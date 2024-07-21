@@ -99,7 +99,8 @@ pub const CellMatrix = struct {
             if (char) |c|
                 self.matrix[row][col].char = c;
             self.matrix[row][col].color = color orelse self.color;
-            self.matrix[row][col].modes = modes orelse .{};
+            if (modes) |m|
+                self.matrix[row][col].modes = m;
             self.matrix[row][col].updated = true;
         }
     }
