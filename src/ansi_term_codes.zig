@@ -22,33 +22,61 @@ pub const ColorCode = enum(u8) {
     bright_white = 97,
 };
 
-pub const GraphicsMode = enum(u8) {
-    bold = 1,
-    dim = 2,
-    italic = 3,
-    underline = 4,
-    blinking = 5,
-    inverse = 7,
-    hidden = 8,
-    strikethrough = 9,
+pub const GraphicsModes = packed struct {
+    bold: bool = false,
+    dim: bool = false,
+    italics: bool = false,
+    underline: bool = false,
+    blinking: bool = false,
+    inverse: bool = false,
+    hidden: bool = false,
+    strikethrough: bool = false,
+
+    const set_mode_map = std.StaticStringMap(u8).initComptime(.{
+        .{ "bold", 1 },
+        .{ "dim", 2 },
+        .{ "italics", 3 },
+        .{ "underline", 4 },
+        .{ "blinking", 5 },
+        .{ "inverse", 7 },
+        .{ "hidden", 8 },
+        .{ "strikethrough", 9 },
+    });
+
+    const clear_mode_map = std.StaticStringMap(u8).initComptime(.{
+        .{ "italics", 23 },
+        .{ "underline", 24 },
+        .{ "blinking", 25 },
+        .{ "inverse", 27 },
+        .{ "hidden", 28 },
+        .{ "strikethrough", 29 },
+    });
+
+    const Self = @This();
+
+    pub fn updateGraphicsModes(self: *GraphicsModes, writer: anytype) !void {
+        // Handle bold and dim differently because the clear code for both is
+        // the same. WHYYYYYY!
+        if (!(self.bold and self.dim))
+            try writer.print("{c}[22m", .{esc});
+        inline for (std.meta.fields(Self)[0..2]) |field| {
+            if (@field(self.*, field.name))
+                try writer.print("{c}[{d}m", .{
+                    esc,
+                    set_mode_map.get(field.name).?,
+                });
+        }
+
+        var code: u8 = 0;
+        inline for (std.meta.fields(Self)[2..]) |field| {
+            if (@field(self.*, field.name)) {
+                code = set_mode_map.get(field.name).?;
+            } else code = clear_mode_map.get(field.name).?;
+            try writer.print("{c}[{d}m", .{ esc, code });
+        }
+    }
 };
 
-pub fn setMode(writer: anytype, mode: GraphicsMode) !void {
-    try writer.print("{c}[{d}m", .{
-        esc,
-        @intFromEnum(mode),
-    });
-}
-
-pub fn clearMode(writer: anytype, mode: GraphicsMode) !void {
-    var clear_int = @intFromEnum(mode) + 21;
-    if (mode == .blinking)
-        clear_int -= 1;
-    try writer.print("{c}[{d}m", .{
-        esc,
-        clear_int,
-    });
-}
 pub fn setForegroundColor(
     writer: anytype,
     code: ColorCode,
@@ -119,7 +147,11 @@ test "color_change" {
 test "graphics_modes" {
     const writer = std.io.getStdOut().writer();
 
-    try setMode(writer, .bold);
-    try writer.writeAll("hola\n");
-    try clearMode(writer, .bold);
+    var g = GraphicsModes{};
+
+    g.bold = true;
+    try g.updateGraphicsModes(writer);
+    _ = try writer.write("hola\n");
+    g.bold = false;
+    try g.updateGraphicsModes(writer);
 }
