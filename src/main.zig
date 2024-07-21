@@ -6,6 +6,7 @@ const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
 const cleanutils = @import("cleanup.zig");
 const parg = @import("parg");
+const options = @import("options.zig");
 
 const Cleanup = cleanutils.Cleanup;
 
@@ -56,21 +57,39 @@ fn Delay() type {
 
 var printDelay: Delay() = .UPS_60;
 
-// Struct containing all possible flags
-// Used to pass flag info between functions when necessary
-const Flags = packed struct {
-    async_cols: bool = false,
-    bold: bool = false,
-    all_bold: bool = false,
-};
-
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
 
     var t = try termsize.termSize(std.io.getStdOut());
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
 
-    var flags: Flags = .{};
+    var flags: options.Flags = .{};
+
+    var p = try parg.parseProcess(allocator, .{});
+    defer p.deinit();
+
+    // Skip executable name or panic if it's not found
+    _ = p.nextValue() orelse @panic("no executable name");
+
+    while (p.next()) |token| {
+        switch (token) {
+            .flag => |flag| {
+                if (flag.isShort("a")) {
+                    flags.async_cols = true;
+                } else {
+                    inline for (options.help_str) |line| {
+                        try stdout.print("{s}\n", .{line});
+                    }
+                    std.process.exit(0);
+                }
+            },
+            .arg => {},
+            .unexpected_value => @panic("unexpected value"),
+        }
+    }
 
     if (t) |*terminfo| {
         // If the termsize is available, create a cell matrix of that size
@@ -79,10 +98,6 @@ pub fn main() !void {
         const b = std.io.BufferedWriter(1_000_000, @TypeOf(stdout));
         var buffer: b = .{ .unbuffered_writer = stdout };
         const bufOut = buffer.writer();
-
-        var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-        const allocator = gpa.allocator();
-        defer _ = gpa.deinit();
 
         // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
@@ -127,24 +142,6 @@ pub fn main() !void {
 
         var cols: u16 = 0;
         var rows: u16 = 0;
-
-        var p = try parg.parseProcess(allocator, .{});
-        defer p.deinit();
-
-        // Skip executable name or panic if it's not found
-        _ = p.nextValue() orelse @panic("no executable name");
-
-        while (p.next()) |token| {
-            switch (token) {
-                .flag => |flag| {
-                    if (flag.isShort("a"))
-                        flags.async_cols = true;
-                },
-                .arg => {},
-                .unexpected_value => @panic("unexpected value"),
-            }
-        }
-
         while (input != 'q') {
             t = (try termsize.termSize(std.io.getStdOut())).?;
             cols = terminfo.width;
