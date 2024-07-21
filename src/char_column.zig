@@ -97,9 +97,6 @@ pub const ColumnList = struct {
             ));
 
         if (self.counter >= self.iterate_count) {
-            // This method of removing elements from an ArrayList comes from jdh in this livestream:
-            // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609
-            // That said, I think I did it a tiny bit better (no struct member var)
             var i: usize = 0;
             var add_new_col = true;
             const new_char_row = rng.intRangeAtMost(
@@ -120,6 +117,9 @@ pub const ColumnList = struct {
                 );
                 col.iterate(matrix, char);
 
+                // This method of removing elements from an ArrayList comes from jdh in this livestream:
+                // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609
+                // That said, I think I did it a tiny bit better (no struct member var)
                 if (col.tail >= matrix.num_rows) {
                     remove = true;
                 } else if (col.tail < new_char_row) {

@@ -9,12 +9,18 @@ const parg = @import("parg");
 
 const Cleanup = cleanutils.Cleanup;
 
+// Thread function for getting input from the user
+// Not sure how ncurses gets input without blocking, so I
+// just used a thread.
 fn getInput(reader: std.fs.File.Reader, char: *u8) !void {
     while (char.* != 'q') {
         char.* = try reader.readByte();
     }
 }
 
+// Set up enum for delay between updates
+// not gonna lie this was kind of just an excuse for me to do crazy
+// metaprogramming stuff, but it works lol
 fn Delay() type {
     const updates_per_sec = [_]f64{
         20.0,
@@ -50,13 +56,21 @@ fn Delay() type {
 
 var printDelay: Delay() = .UPS_60;
 
+// Struct containing all possible flags
+// Used to pass flag info between functions when necessary
+const Flags = packed struct {
+    async_cols: bool = false,
+    bold: bool = false,
+    all_bold: bool = false,
+};
+
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stdin = std.io.getStdIn().reader();
 
     var t = try termsize.termSize(std.io.getStdOut());
 
-    var async_enabled = false;
+    var flags: Flags = .{};
 
     if (t) |*terminfo| {
         // If the termsize is available, create a cell matrix of that size
@@ -124,7 +138,7 @@ pub fn main() !void {
             switch (token) {
                 .flag => |flag| {
                     if (flag.isShort("a"))
-                        async_enabled = true;
+                        flags.async_cols = true;
                 },
                 .arg => {},
                 .unexpected_value => @panic("unexpected value"),
@@ -155,11 +169,13 @@ pub fn main() !void {
                 charstrs = std.ArrayList(col.ColumnList).init(allocator);
 
                 for (0..cols) |i| {
+                    // Only have columns for every other column in the terminal
+                    // It looks a lot better (and is what cmatrix does)
                     if (i % 2 == 0) {
                         try charstrs.append(col.ColumnList.init(
                             allocator,
                             i,
-                            if (async_enabled)
+                            if (flags.async_cols)
                                 rng.random().intRangeAtMost(u8, 3, 6)
                             else
                                 null,
