@@ -136,7 +136,7 @@ pub fn main() !void {
             0,
             0,
             allocator,
-            color,
+            &color,
             null,
         );
 
@@ -179,7 +179,7 @@ pub fn main() !void {
                     rows,
                     cols,
                     allocator,
-                    color,
+                    &color,
                     null,
                 );
                 charstrs = std.ArrayList(col.ColumnList).init(allocator);
