@@ -8,9 +8,9 @@ pub const Flags = packed struct {
 
 pub const help_str = [_][]const u8{
     "Usage: zmatrix -[abBCh]",
-    "-a: asynchronous scroll - columns of characters move at different speeds",
-    "-b: bold - characters can be in bold",
-    "-B: all bold - all characters are bold",
-    "-C: color - set the desired character color (default: green)",
-    "-h: help - print this help message",
+    "-a: Asynchronous scroll - columns of characters move at different speeds",
+    "-b: Bold - characters can be in bold",
+    "-B: All bold - all characters are bold",
+    "-C [color]: set the desired character color (default: green)",
+    "-h: Help - print this help message",
 };
