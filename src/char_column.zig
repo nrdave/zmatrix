@@ -23,15 +23,16 @@ pub const Column = struct {
         self: *Column,
         matrix: *cm.CellMatrix,
         new_char: u8,
+        new_char_color: ?ansi.ColorCode,
+        new_char_modes: ?ansi.GraphicsModes,
         last_color: ?ansi.ColorCode,
-        modes: ?ansi.GraphicsModes,
     ) void {
         matrix.writeChar(' ', self.col, self.tail, null, null);
         matrix.writeChar(
             null,
             self.col,
             self.head,
-            last_color orelse null,
+            last_color,
             null,
         );
 
@@ -42,8 +43,8 @@ pub const Column = struct {
             new_char,
             self.col,
             self.head,
-            matrix.leading_color,
-            modes orelse null,
+            new_char_color orelse matrix.leading_color,
+            new_char_modes orelse null,
         );
     }
 };
@@ -159,7 +160,17 @@ pub const ColumnList = struct {
                     if (self.rng.intRangeAtMost(u8, 0, 10) < bold_odds)
                         g.bold = true;
                 }
-                col.iterate(matrix, char, null, g);
+                col.iterate(
+                    matrix,
+                    char,
+                    if (self.flags.rainbow) @enumFromInt(self.rng.intRangeAtMost(
+                        u8,
+                        @intFromEnum(ansi.ColorCode.red),
+                        @intFromEnum(ansi.ColorCode.white),
+                    )) else null,
+                    g,
+                    if (self.flags.rainbow) null else matrix.color.*,
+                );
 
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:
                 // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609

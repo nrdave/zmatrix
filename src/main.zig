@@ -98,6 +98,8 @@ pub fn main() !void {
                 } else if (flag.isShort("C")) {
                     const col_arg = p.nextValue() orelse @panic("Expected color after -C argument");
                     color = color_map.get(col_arg) orelse @panic("Invalid color specified as -C argument");
+                } else if (flag.isShort("r")) {
+                    flags.rainbow = true;
                 } else {
                     inline for (options.help_str) |line| {
                         try stdout.print("{s}\n", .{line});

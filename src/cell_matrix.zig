@@ -98,7 +98,8 @@ pub const CellMatrix = struct {
         if (((row < self.matrix.len) and (row >= 0)) and (col < self.matrix[0].len)) {
             if (char) |c|
                 self.matrix[row][col].char = c;
-            self.matrix[row][col].color = color orelse self.color.*;
+            if (color) |c|
+                self.matrix[row][col].color = c;
             if (modes) |m|
                 self.matrix[row][col].modes = m;
             self.matrix[row][col].updated = true;
