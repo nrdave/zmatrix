@@ -35,7 +35,7 @@ pub const CellMatrix = struct {
     y0: usize = 1,
     num_rows: usize,
     num_cols: usize,
-    color: *ansi.ColorCode,
+    color: ansi.ColorCode,
     leading_color: ansi.ColorCode,
 
     matrix: [][]Cell,
@@ -44,7 +44,7 @@ pub const CellMatrix = struct {
         r: u32,
         c: u32,
         allocator: std.mem.Allocator,
-        color: *ansi.ColorCode,
+        color: ansi.ColorCode,
         leading_color: ?ansi.ColorCode,
     ) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
@@ -54,7 +54,7 @@ pub const CellMatrix = struct {
             for (row.*) |*cell| {
                 cell.* = Cell.init(
                     ' ',
-                    color.*,
+                    color,
                 );
             }
         }
@@ -73,8 +73,8 @@ pub const CellMatrix = struct {
     }
 
     pub fn setColor(self: *CellMatrix, color: ansi.ColorCode) void {
-        if (self.color.* != color) {
-            self.color.* = color;
+        if (self.color != color) {
+            self.color = color;
             for (self.matrix) |row| {
                 for (row) |*cell| {
                     cell.color = color;

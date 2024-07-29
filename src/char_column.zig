@@ -169,7 +169,7 @@ pub const ColumnList = struct {
                         @intFromEnum(ansi.ColorCode.white),
                     )) else null,
                     g,
-                    if (self.flags.rainbow) null else matrix.color.*,
+                    if (self.flags.rainbow) null else matrix.color,
                 );
 
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:
