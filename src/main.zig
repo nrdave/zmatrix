@@ -58,6 +58,7 @@ fn Delay() type {
 var printDelay: Delay() = .UPS_60;
 
 const color_map = std.StaticStringMap(ansi.ColorCode).initComptime(.{
+    .{ "black", .black },
     .{ "red", .red },
     .{ "green", .green },
     .{ "yellow", .yellow },
@@ -85,6 +86,7 @@ pub fn main() !void {
     _ = p.nextValue() orelse @panic("no executable name");
 
     var color: ansi.ColorCode = .green;
+    var bg_color: ansi.ColorCode = .default;
 
     while (p.next()) |token| {
         switch (token) {
@@ -98,6 +100,9 @@ pub fn main() !void {
                 } else if (flag.isShort("C")) {
                     const col_arg = p.nextValue() orelse @panic("Expected color after -C argument");
                     color = color_map.get(col_arg) orelse @panic("Invalid color specified as -C argument");
+                } else if (flag.isShort("g")) {
+                    const col_arg = p.nextValue() orelse "black";
+                    bg_color = color_map.get(col_arg) orelse @panic("Invalid color specified as -g argument");
                 } else if (flag.isShort("r")) {
                     flags.rainbow = true;
                 } else {
@@ -139,6 +144,7 @@ pub fn main() !void {
             0,
             allocator,
             color,
+            bg_color,
             null,
         );
 
@@ -182,6 +188,7 @@ pub fn main() !void {
                     cols,
                     allocator,
                     color,
+                    bg_color,
                     null,
                 );
                 charstrs = std.ArrayList(col.ColumnList).init(allocator);

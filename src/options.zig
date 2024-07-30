@@ -12,7 +12,8 @@ pub const help_str = [_][]const u8{
     "-a: Asynchronous scroll - columns of characters move at different speeds",
     "-b: Bold - characters can be in bold",
     "-B: All bold - all characters are bold",
-    "-C [color]: set the desired character color (default: green)",
+    "-C [color]: set the desired character color",
+    "-g [color]: set the desired background color. If no option is provided, the background will be the terminal's black color",
     "-h: Help - print this help message",
     "-r: rainbow: random colors for each character",
 };
