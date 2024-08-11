@@ -102,7 +102,7 @@ pub fn main() !void {
                     color = color_map.get(col_arg) orelse @panic("Invalid color specified as -C argument");
                 } else if (flag.isShort("g")) {
                     const col_arg = p.nextValue() orelse "black";
-                    bg_color = color_map.get(col_arg) orelse @panic("Invalid color specified as -g argument");
+                    bg_color = color_map.get(col_arg) orelse .black;
                 } else if (flag.isShort("r")) {
                     flags.rainbow = true;
                 } else {
