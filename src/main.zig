@@ -6,18 +6,10 @@ const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
 const cleanutils = @import("cleanup.zig");
 const parg = @import("parg");
+const terminput = @import("term_input.zig");
 const options = @import("options.zig");
 
 const Cleanup = cleanutils.Cleanup;
-
-// Thread function for getting input from the user
-// Not sure how ncurses gets input without blocking, so I
-// just used a thread.
-fn getInput(reader: std.fs.File.Reader, char: *u8) !void {
-    while (char.* != 'q') {
-        char.* = try reader.readByte();
-    }
-}
 
 // Set up enum for delay between updates
 // not gonna lie this was kind of just an excuse for me to do crazy
@@ -70,7 +62,6 @@ const color_map = std.StaticStringMap(ansi.ColorCode).initComptime(.{
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
-    const stdin = std.io.getStdIn().reader();
 
     var t = try termsize.termSize(std.io.getStdOut());
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -125,6 +116,8 @@ pub fn main() !void {
         var buffer: b = .{ .unbuffered_writer = stdout };
         const bufOut = buffer.writer();
 
+        try terminput.init();
+
         // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
         const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
 
@@ -158,18 +151,13 @@ pub fn main() !void {
             charstrs.deinit();
         }
 
-        var input: u8 = 0;
-
-        var io_thread = try std.Thread.spawn(
-            .{},
-            getInput,
-            .{ stdin, &input },
-        );
-        defer io_thread.join();
+        var input: ?u8 = 0;
 
         var cols: u16 = 0;
         var rows: u16 = 0;
-        while (input != 'q') {
+        while (true) {
+            input = terminput.getInput();
+
             t = (try termsize.termSize(std.io.getStdOut())).?;
             cols = terminfo.width;
             rows = terminfo.height;
@@ -210,60 +198,64 @@ pub fn main() !void {
             try matrix.print(bufOut);
             try buffer.flush();
 
-            switch (input) {
-                '!' => {
-                    matrix.setColor(.red);
-                },
-                '@' => {
-                    matrix.setColor(.green);
-                },
-                '#' => {
-                    matrix.setColor(.yellow);
-                },
-                '$' => {
-                    matrix.setColor(.blue);
-                },
-                '%' => {
-                    matrix.setColor(.magenta);
-                },
-                '^' => {
-                    matrix.setColor(.cyan);
-                },
-                '&' => {
-                    matrix.setColor(.white);
-                },
-                '0' => {
-                    printDelay = .UPS_500;
-                },
-                '1' => {
-                    printDelay = .UPS_250;
-                },
-                '2' => {
-                    printDelay = .UPS_200;
-                },
-                '3' => {
-                    printDelay = .UPS_160;
-                },
-                '4' => {
-                    printDelay = .UPS_120;
-                },
-                '5' => {
-                    printDelay = .UPS_100;
-                },
-                '6' => {
-                    printDelay = .UPS_80;
-                },
-                '7' => {
-                    printDelay = .UPS_60;
-                },
-                '8' => {
-                    printDelay = .UPS_40;
-                },
-                '9' => {
-                    printDelay = .UPS_20;
-                },
-
-                else => {},
+            if (input) |i| {
+                switch (i) {
+                    '!' => {
+                        matrix.setColor(.red);
+                    },
+                    '@' => {
+                        matrix.setColor(.green);
+                    },
+                    '#' => {
+                        matrix.setColor(.yellow);
+                    },
+                    '$' => {
+                        matrix.setColor(.blue);
+                    },
+                    '%' => {
+                        matrix.setColor(.magenta);
+                    },
+                    '^' => {
+                        matrix.setColor(.cyan);
+                    },
+                    '&' => {
+                        matrix.setColor(.white);
+                    },
+                    '0' => {
+                        printDelay = .UPS_500;
+                    },
+                    '1' => {
+                        printDelay = .UPS_250;
+                    },
+                    '2' => {
+                        printDelay = .UPS_200;
+                    },
+                    '3' => {
+                        printDelay = .UPS_160;
+                    },
+                    '4' => {
+                        printDelay = .UPS_120;
+                    },
+                    '5' => {
+                        printDelay = .UPS_100;
+                    },
+                    '6' => {
+                        printDelay = .UPS_80;
+                    },
+                    '7' => {
+                        printDelay = .UPS_60;
+                    },
+                    '8' => {
+                        printDelay = .UPS_40;
+                    },
+                    '9' => {
+                        printDelay = .UPS_20;
+                    },
+                    'q' => {
+                        break;
+                    },
+                    else => {},
+                }
             }
 
             for (charstrs.items) |*c| {

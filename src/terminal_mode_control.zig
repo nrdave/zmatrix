@@ -9,7 +9,12 @@ pub fn enableRawMode(input: std.fs.File.Handle) !TermStatus {
     if (is_windows) {
         var orig_mode: TermStatus = undefined;
 
-        if (std.os.windows.kernel32.GetConsoleMode(input, &orig_mode) == 0) {
+        // GetConsoleMode fails if stdout isn't a terminal, so that gets
+        // checked "automatically"
+        if (std.os.windows.kernel32.GetConsoleMode(
+            input,
+            &orig_mode,
+        ) == 0) {
             return switch (std.os.windows.kernel32.GetLastError()) {
                 .INVALID_HANDLE => error.InvalidHandle,
                 else => |err| std.os.windows.unexpectedError(err),
@@ -31,6 +36,11 @@ pub fn enableRawMode(input: std.fs.File.Handle) !TermStatus {
 
         return orig_mode;
     } else {
+        // Make sure stdout is a terminal
+        if (std.posix.isatty(input) == false) {
+            @panic("stdout is not a terminal");
+        }
+
         const orig_termios = try std.posix.tcgetattr(input);
         var t = orig_termios;
         t.lflag.ECHO = false;
