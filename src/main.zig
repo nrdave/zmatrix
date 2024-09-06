@@ -136,10 +136,13 @@ pub fn main() !void {
             0,
             0,
             allocator,
-            color,
-            bg_color,
-            null,
         );
+
+        for (matrix.matrix) |row| {
+            for (row) |*cell| {
+                cell.setBgColor(bg_color);
+            }
+        }
 
         defer matrix.deinit(allocator);
 
@@ -175,9 +178,6 @@ pub fn main() !void {
                     rows,
                     cols,
                     allocator,
-                    color,
-                    bg_color,
-                    null,
                 );
                 charstrs = std.ArrayList(col.ColumnList).init(allocator);
 
@@ -190,6 +190,7 @@ pub fn main() !void {
                             i,
                             flags,
                             &rng.random(),
+                            color,
                         ));
                     }
                 }
@@ -200,26 +201,21 @@ pub fn main() !void {
 
             if (input) |i| {
                 switch (i) {
-                    '!' => {
-                        matrix.setColor(.red);
-                    },
-                    '@' => {
-                        matrix.setColor(.green);
-                    },
-                    '#' => {
-                        matrix.setColor(.yellow);
-                    },
-                    '$' => {
-                        matrix.setColor(.blue);
-                    },
-                    '%' => {
-                        matrix.setColor(.magenta);
-                    },
-                    '^' => {
-                        matrix.setColor(.cyan);
-                    },
-                    '&' => {
-                        matrix.setColor(.white);
+                    '!', '@', '#', '$', '%', '^', '&' => |c| {
+                        color = switch (c) {
+                            '!' => .red,
+                            '@' => .green,
+                            '#' => .yellow,
+                            '$' => .blue,
+                            '%' => .magenta,
+                            '^' => .cyan,
+                            '&' => .white,
+                            else => .default,
+                        };
+                        setColor(&matrix, color);
+                        for (charstrs.items) |*colList| {
+                            colList.color = color;
+                        }
                     },
                     '0' => {
                         printDelay = .UPS_500;
@@ -269,5 +265,13 @@ pub fn main() !void {
         try Cleanup.cleanup();
     } else {
         std.debug.print("Unable to start zmatrix: Could not determine terminal size\n", .{});
+    }
+}
+
+fn setColor(matrix: *cm.CellMatrix, color: ansi.ColorCode) void {
+    for (matrix.matrix) |row| {
+        for (row) |*cell| {
+            cell.setFgColor(color);
+        }
     }
 }

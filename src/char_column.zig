@@ -27,12 +27,20 @@ pub const Column = struct {
         new_char_modes: ?ansi.GraphicsModes,
         last_color: ?ansi.ColorCode,
     ) void {
-        matrix.writeChar(' ', self.col, self.tail, null, null);
+        matrix.writeChar(
+            ' ',
+            self.col,
+            self.tail,
+            null,
+            null,
+            null,
+        );
         matrix.writeChar(
             null,
             self.col,
             self.head,
             last_color,
+            null,
             null,
         );
 
@@ -43,7 +51,8 @@ pub const Column = struct {
             new_char,
             self.col,
             self.head,
-            new_char_color orelse matrix.leading_color,
+            new_char_color orelse .default,
+            null,
             new_char_modes orelse null,
         );
     }
@@ -91,6 +100,7 @@ pub const ColumnList = struct {
     counter: u8,
     iterate_count: u8,
     flags: options.Flags,
+    color: ansi.ColorCode,
     rng: *const std.Random,
 
     const default_iterate_count = 3;
@@ -103,6 +113,7 @@ pub const ColumnList = struct {
         column: usize,
         flags: options.Flags,
         rng: *const std.Random,
+        color: ansi.ColorCode,
     ) ColumnList {
         const c = ColumnList{
             .column = column,
@@ -115,6 +126,7 @@ pub const ColumnList = struct {
             ) else default_iterate_count,
             .flags = flags,
             .rng = rng,
+            .color = color,
         };
         return c;
     }
@@ -169,7 +181,7 @@ pub const ColumnList = struct {
                         @intFromEnum(ansi.ColorCode.white),
                     )) else null,
                     g,
-                    if (self.flags.rainbow) null else matrix.color,
+                    if (self.flags.rainbow) null else self.color,
                 );
 
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:

@@ -3,27 +3,35 @@ const ansi = @import("ansi_term_codes.zig");
 
 pub const Cell = struct {
     char: u8,
-    color: ansi.ColorCode,
+    fgcolor: ansi.ColorCode,
+    bgcolor: ansi.ColorCode,
     modes: ansi.GraphicsModes,
     updated: bool,
 
-    pub fn init(c: u8, color: ?ansi.ColorCode) Cell {
+    pub fn init(c: u8, fgcolor: ?ansi.ColorCode, bgcolor: ?ansi.ColorCode) Cell {
         return Cell{
             .char = c,
-            .color = color orelse .default,
+            .fgcolor = fgcolor orelse .default,
+            .bgcolor = bgcolor orelse .default,
             .modes = .{},
             .updated = true,
         };
     }
 
-    pub fn setColor(self: *Cell, color: ansi.ColorCode) void {
-        self.color = color;
+    pub fn setFgColor(self: *Cell, color: ansi.ColorCode) void {
+        self.fgcolor = color;
+        self.updated = true;
+    }
+
+    pub fn setBgColor(self: *Cell, color: ansi.ColorCode) void {
+        self.bgcolor = color;
         self.updated = true;
     }
 
     pub fn print(self: *Cell, writer: anytype) !void {
-        try ansi.setForegroundColor(writer, self.color);
         try self.modes.setModes(writer);
+        try ansi.setForegroundColor(writer, self.fgcolor);
+        try ansi.setBackgroundColor(writer, self.bgcolor);
         try writer.print("{c}", .{self.char});
         self.updated = false;
     }
@@ -35,39 +43,25 @@ pub const CellMatrix = struct {
     y0: usize = 1,
     num_rows: usize,
     num_cols: usize,
-    color: ansi.ColorCode,
-    leading_color: ansi.ColorCode,
-
-    background_color: ansi.ColorCode,
-
     matrix: [][]Cell,
 
     pub fn init(
         r: u32,
         c: u32,
         allocator: std.mem.Allocator,
-        color: ansi.ColorCode,
-        background_color: ansi.ColorCode,
-        leading_color: ?ansi.ColorCode,
     ) !CellMatrix {
         // Copied this from https://stackoverflow.com/q/66630797
         const m = try allocator.alloc([]Cell, r);
         for (m) |*row| {
             row.* = try allocator.alloc(Cell, c);
             for (row.*) |*cell| {
-                cell.* = Cell.init(
-                    ' ',
-                    color,
-                );
+                cell.* = Cell.init(' ', null, null);
             }
         }
         return CellMatrix{
             .num_rows = r,
             .num_cols = c,
             .matrix = m,
-            .color = color,
-            .background_color = background_color,
-            .leading_color = leading_color orelse .white,
         };
     }
 
@@ -76,24 +70,13 @@ pub const CellMatrix = struct {
         self.y0 = y;
     }
 
-    pub fn setColor(self: *CellMatrix, color: ansi.ColorCode) void {
-        if (self.color != color) {
-            self.color = color;
-            for (self.matrix) |row| {
-                for (row) |*cell| {
-                    cell.color = color;
-                    cell.updated = true;
-                }
-            }
-        }
-    }
-
     pub fn writeChar(
         self: CellMatrix,
         char: ?u8,
         x: usize,
         y: isize,
-        color: ?ansi.ColorCode,
+        fgcolor: ?ansi.ColorCode,
+        bgcolor: ?ansi.ColorCode,
         modes: ?ansi.GraphicsModes,
     ) void {
         const row: usize = @bitCast(y);
@@ -102,8 +85,10 @@ pub const CellMatrix = struct {
         if (((row < self.matrix.len) and (row >= 0)) and (col < self.matrix[0].len)) {
             if (char) |c|
                 self.matrix[row][col].char = c;
-            if (color) |c|
-                self.matrix[row][col].color = c;
+            if (fgcolor) |f|
+                self.matrix[row][col].fgcolor = f;
+            if (bgcolor) |b|
+                self.matrix[row][col].bgcolor = b;
             if (modes) |m|
                 self.matrix[row][col].modes = m;
             self.matrix[row][col].updated = true;
@@ -111,7 +96,6 @@ pub const CellMatrix = struct {
     }
 
     pub fn print(self: CellMatrix, writer: anytype) !void {
-        try ansi.setBackgroundColor(writer, self.background_color);
         for (self.matrix, 0..) |rows, r| {
             for (rows, 0..) |*cell, c| {
                 if (cell.updated == true) {
