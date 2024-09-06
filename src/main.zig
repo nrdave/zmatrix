@@ -4,12 +4,10 @@ const cm = @import("cell_matrix.zig");
 const col = @import("char_column.zig");
 const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
-const cleanutils = @import("cleanup.zig");
+const Cleanup = @import("Cleanup.zig");
 const parg = @import("parg");
 const terminput = @import("term_input.zig");
 const options = @import("options.zig");
-
-const Cleanup = cleanutils.Cleanup;
 
 // Set up enum for delay between updates
 // not gonna lie this was kind of just an excuse for me to do crazy

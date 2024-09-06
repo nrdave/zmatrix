@@ -8,8 +8,10 @@ pub const Cell = struct {
     modes: ansi.GraphicsModes,
     updated: bool,
 
-    pub fn init(c: u8, fgcolor: ?ansi.ColorCode, bgcolor: ?ansi.ColorCode) Cell {
-        return Cell{
+    const Self = @This();
+
+    pub fn init(c: u8, fgcolor: ?ansi.ColorCode, bgcolor: ?ansi.ColorCode) Self {
+        return Self{
             .char = c,
             .fgcolor = fgcolor orelse .default,
             .bgcolor = bgcolor orelse .default,
@@ -18,17 +20,17 @@ pub const Cell = struct {
         };
     }
 
-    pub fn setFgColor(self: *Cell, color: ansi.ColorCode) void {
+    pub fn setFgColor(self: *Self, color: ansi.ColorCode) void {
         self.fgcolor = color;
         self.updated = true;
     }
 
-    pub fn setBgColor(self: *Cell, color: ansi.ColorCode) void {
+    pub fn setBgColor(self: *Self, color: ansi.ColorCode) void {
         self.bgcolor = color;
         self.updated = true;
     }
 
-    pub fn print(self: *Cell, writer: anytype) !void {
+    pub fn print(self: *Self, writer: anytype) !void {
         try self.modes.setModes(writer);
         try ansi.setForegroundColor(writer, self.fgcolor);
         try ansi.setBackgroundColor(writer, self.bgcolor);
@@ -45,11 +47,13 @@ pub const CellMatrix = struct {
     num_cols: usize,
     matrix: [][]Cell,
 
+    const Self = @This();
+
     pub fn init(
         r: u32,
         c: u32,
         allocator: std.mem.Allocator,
-    ) !CellMatrix {
+    ) !Self {
         // Copied this from https://stackoverflow.com/q/66630797
         const m = try allocator.alloc([]Cell, r);
         for (m) |*row| {
@@ -58,20 +62,20 @@ pub const CellMatrix = struct {
                 cell.* = Cell.init(' ', null, null);
             }
         }
-        return CellMatrix{
+        return Self{
             .num_rows = r,
             .num_cols = c,
             .matrix = m,
         };
     }
 
-    pub fn setOrigin(self: *CellMatrix, x: usize, y: usize) void {
+    pub fn setOrigin(self: *Self, x: usize, y: usize) void {
         self.x0 = x;
         self.y0 = y;
     }
 
     pub fn writeChar(
-        self: CellMatrix,
+        self: *Self,
         char: ?u8,
         x: usize,
         y: isize,
@@ -95,7 +99,7 @@ pub const CellMatrix = struct {
         }
     }
 
-    pub fn print(self: CellMatrix, writer: anytype) !void {
+    pub fn print(self: *Self, writer: anytype) !void {
         for (self.matrix, 0..) |rows, r| {
             for (rows, 0..) |*cell, c| {
                 if (cell.updated == true) {
@@ -110,7 +114,7 @@ pub const CellMatrix = struct {
         }
     }
 
-    pub fn deinit(self: CellMatrix, allocator: std.mem.Allocator) void {
+    pub fn deinit(self: Self, allocator: std.mem.Allocator) void {
         for (self.matrix) |row| {
             allocator.free(row);
         }
@@ -125,11 +129,9 @@ test "cell_matrix" {
         5,
         5,
         alloc,
-        .blue,
-        null,
     );
     x.setOrigin(60, 0);
-    x.writeChar('c', 3, 3, null);
+    x.writeChar('c', 3, 3, null, null, .{ .bold = true });
 
     const stdout = std.io.getStdOut().writer();
     try ansi.clearScreen(stdout);
