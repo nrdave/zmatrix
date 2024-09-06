@@ -1,6 +1,6 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
-const cm = @import("cell_matrix.zig");
+const term_window = @import("terminal_window.zig");
 const options = @import("options.zig");
 
 pub const Column = struct {
@@ -21,13 +21,12 @@ pub const Column = struct {
 
     pub fn iterate(
         self: *Column,
-        matrix: *cm.CellMatrix,
         new_char: u8,
         new_char_color: ?ansi.ColorCode,
         new_char_modes: ?ansi.GraphicsModes,
         last_color: ?ansi.ColorCode,
     ) void {
-        matrix.writeChar(
+        term_window.writeChar(
             ' ',
             self.col,
             self.tail,
@@ -35,7 +34,7 @@ pub const Column = struct {
             null,
             null,
         );
-        matrix.writeChar(
+        term_window.writeChar(
             null,
             self.col,
             self.head,
@@ -47,7 +46,7 @@ pub const Column = struct {
         self.head += 1;
         self.tail += 1;
 
-        matrix.writeChar(
+        term_window.writeChar(
             new_char,
             self.col,
             self.head,
@@ -133,14 +132,13 @@ pub const ColumnList = struct {
 
     pub fn update(
         self: *ColumnList,
-        matrix: *cm.CellMatrix,
     ) !void {
         self.counter += 1;
         var char: u8 = '0';
         if (self.cols.items.len == 0)
             try self.cols.append(createRandomColumn(
                 self.column,
-                matrix.num_rows,
+                term_window.matrix.len,
                 self.rng,
             ));
 
@@ -149,8 +147,8 @@ pub const ColumnList = struct {
             var add_new_col = true;
             const new_char_row = self.rng.intRangeAtMost(
                 usize,
-                matrix.num_rows / 8,
-                matrix.num_rows,
+                term_window.matrix.len / 8,
+                term_window.matrix.len,
             );
 
             while (i < self.cols.items.len) {
@@ -173,7 +171,6 @@ pub const ColumnList = struct {
                         g.bold = true;
                 }
                 col.iterate(
-                    matrix,
                     char,
                     if (self.flags.rainbow) @enumFromInt(self.rng.intRangeAtMost(
                         u8,
@@ -187,7 +184,7 @@ pub const ColumnList = struct {
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:
                 // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609
                 // That said, I think I did it a tiny bit better (no struct member var)
-                if (col.tail >= matrix.num_rows) {
+                if (col.tail >= term_window.matrix.len) {
                     remove = true;
                 } else if (col.tail < new_char_row) {
                     add_new_col = false;
@@ -200,7 +197,7 @@ pub const ColumnList = struct {
             if (add_new_col)
                 try self.cols.append(createRandomColumn(
                     self.column,
-                    matrix.num_rows,
+                    term_window.matrix.len,
                     self.rng,
                 ));
         }

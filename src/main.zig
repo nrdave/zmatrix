@@ -1,6 +1,6 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
-const cm = @import("cell_matrix.zig");
+const term_window = @import("terminal_window.zig");
 const col = @import("char_column.zig");
 const termsize = @import("termsize");
 const termctrl = @import("terminal_mode_control.zig");
@@ -130,19 +130,15 @@ pub fn main() !void {
         try ansi.hideCursor(stdout);
         try ansi.clearScreen(stdout);
 
-        var matrix: cm.CellMatrix = try cm.CellMatrix.init(
-            0,
-            0,
-            allocator,
-        );
+        try term_window.init(0, 0, allocator);
 
-        for (matrix.matrix) |row| {
+        for (term_window.matrix) |row| {
             for (row) |*cell| {
                 cell.setBgColor(bg_color);
             }
         }
 
-        defer matrix.deinit(allocator);
+        defer term_window.deinit(allocator);
 
         var charstrs = std.ArrayList(col.ColumnList).init(allocator);
         defer {
@@ -164,7 +160,7 @@ pub fn main() !void {
             rows = terminfo.height;
 
             if ((cols != prev_cols) or (rows != prev_rows)) {
-                matrix.deinit(allocator);
+                term_window.deinit(allocator);
                 for (charstrs.items) |*c| {
                     c.deinit();
                 }
@@ -172,13 +168,13 @@ pub fn main() !void {
 
                 try ansi.clearScreen(stdout);
 
-                matrix = try cm.CellMatrix.init(
+                try term_window.init(
                     rows,
                     cols,
                     allocator,
                 );
 
-                for (matrix.matrix) |row| {
+                for (term_window.matrix) |row| {
                     for (row) |*cell| {
                         cell.setBgColor(bg_color);
                     }
@@ -201,7 +197,7 @@ pub fn main() !void {
                 }
             }
 
-            try matrix.print(bufOut);
+            try term_window.print(bufOut);
             try buffer.flush();
 
             if (input) |i| {
@@ -218,7 +214,7 @@ pub fn main() !void {
                             else => .default,
                         };
                         flags.rainbow = false;
-                        setColor(&matrix, color);
+                        setColor(color);
                         for (charstrs.items) |*colList| {
                             colList.color = color;
                         }
@@ -261,7 +257,7 @@ pub fn main() !void {
             }
 
             for (charstrs.items) |*c| {
-                try c.update(&matrix);
+                try c.update();
             }
             prev_cols = cols;
             prev_rows = rows;
@@ -274,8 +270,8 @@ pub fn main() !void {
     }
 }
 
-fn setColor(matrix: *cm.CellMatrix, color: ansi.ColorCode) void {
-    for (matrix.matrix) |row| {
+fn setColor(color: ansi.ColorCode) void {
+    for (term_window.matrix) |row| {
         for (row) |*cell| {
             cell.setFgColor(color);
         }
