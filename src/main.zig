@@ -179,6 +179,13 @@ pub fn main() !void {
                     cols,
                     allocator,
                 );
+
+                for (matrix.matrix) |row| {
+                    for (row) |*cell| {
+                        cell.setBgColor(bg_color);
+                    }
+                }
+
                 charstrs = std.ArrayList(col.ColumnList).init(allocator);
 
                 for (0..cols) |i| {
@@ -188,7 +195,7 @@ pub fn main() !void {
                         try charstrs.append(col.ColumnList.init(
                             allocator,
                             i,
-                            flags,
+                            &flags,
                             &rng.random(),
                             color,
                         ));
@@ -212,6 +219,7 @@ pub fn main() !void {
                             '&' => .white,
                             else => .default,
                         };
+                        flags.rainbow = false;
                         setColor(&matrix, color);
                         for (charstrs.items) |*colList| {
                             colList.color = color;

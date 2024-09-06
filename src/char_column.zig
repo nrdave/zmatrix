@@ -99,7 +99,7 @@ pub const ColumnList = struct {
     column: usize,
     counter: u8,
     iterate_count: u8,
-    flags: options.Flags,
+    flags: *options.Flags,
     color: ansi.ColorCode,
     rng: *const std.Random,
 
@@ -111,7 +111,7 @@ pub const ColumnList = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         column: usize,
-        flags: options.Flags,
+        flags: *options.Flags,
         rng: *const std.Random,
         color: ansi.ColorCode,
     ) ColumnList {
