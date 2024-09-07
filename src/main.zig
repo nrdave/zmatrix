@@ -3,10 +3,8 @@ const ansi = @import("ansi_term_codes.zig");
 const term_window = @import("terminal_window.zig");
 const col = @import("char_column.zig");
 const termsize = @import("termsize");
-const termctrl = @import("terminal_mode_control.zig");
-const Cleanup = @import("terminal_cleanup.zig");
+const Terminal = @import("Terminal.zig");
 const parg = @import("parg");
-const terminput = @import("terminal_input.zig");
 const options = @import("options.zig");
 
 // Set up enum for delay between updates
@@ -114,19 +112,10 @@ pub fn main() !void {
         var buffer: b = .{ .unbuffered_writer = stdout };
         const bufOut = buffer.writer();
 
-        try terminput.init();
-
-        // Enable the Raw Terminal mode (and store the previous mode for when the program exits)
-        const orig_term_state = try termctrl.enableRawMode(std.io.getStdIn().handle);
+        try Terminal.init();
+        defer Terminal.deinit() catch unreachable;
 
         var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
-
-        try Cleanup.init(
-            orig_term_state,
-            std.io.getStdIn().handle,
-            stdout,
-        );
-
         try ansi.hideCursor(stdout);
         try ansi.clearScreen(stdout);
 
@@ -153,7 +142,7 @@ pub fn main() !void {
         var cols: u16 = 0;
         var rows: u16 = 0;
         while (true) {
-            input = terminput.getInput();
+            input = Terminal.getInput();
 
             t = (try termsize.termSize(std.io.getStdOut())).?;
             cols = terminfo.width;
@@ -263,7 +252,6 @@ pub fn main() !void {
 
             std.time.sleep(@intFromEnum(printDelay));
         }
-        try Cleanup.cleanup();
     } else {
         std.debug.print("Unable to start zmatrix: Could not determine terminal size\n", .{});
     }

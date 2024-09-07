@@ -1,20 +1,18 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
-const termctrl = @import("terminal_mode_control.zig");
+const window = @import("terminal_window.zig");
+const modectrl = @import("terminal_mode_control.zig");
+const input = @import("terminal_input.zig");
 const builtin = @import("builtin");
 
-var term_state: termctrl.TermStatus = undefined;
-var input_handle: std.fs.File.Handle = undefined;
-var output: std.fs.File.Writer = undefined;
+var term_mode: modectrl.TermStatus = undefined;
 
-pub fn init(
-    t: termctrl.TermStatus,
-    i: std.fs.File.Handle,
-    o: std.fs.File.Writer,
-) !void {
-    term_state = t;
-    input_handle = i;
-    output = o;
+pub fn init() !void {
+    const stdin = std.io.getStdIn();
+
+    try input.init();
+
+    term_mode = try modectrl.enableRawMode(stdin.handle);
     if (builtin.os.tag == .windows) {
         try std.os.windows.SetConsoleCtrlHandler(
             windows_exit_handler,
@@ -33,24 +31,28 @@ pub fn init(
     }
 }
 
+pub const getInput = input.getInput;
+
+pub fn deinit() !void {
+    const stdout = std.io.getStdOut().writer();
+    const stdin = std.io.getStdIn();
+    try modectrl.restoreTermMode(stdin.handle, term_mode);
+    try ansi.showCursor(stdout);
+    try ansi.resetCodes(stdout);
+    try ansi.setCursorPos(stdout, 0, 0);
+    try ansi.clearScreen(stdout);
+}
+
 fn windows_exit_handler(ctrl_type: std.os.windows.DWORD) callconv(std.os.windows.WINAPI) std.os.windows.BOOL {
     _ = ctrl_type;
-    cleanup() catch unreachable;
+    deinit() catch unreachable;
     return std.os.windows.FALSE;
 }
 
 fn posix_exit_handler(sig: i32, info: *const std.posix.siginfo_t, ctx_ptr: ?*anyopaque) callconv(.C) void {
     _ = ctx_ptr;
     if (sig == info.signo) {
-        cleanup() catch unreachable;
+        deinit() catch unreachable;
         std.process.exit(0);
     }
-}
-
-pub inline fn cleanup() !void {
-    try termctrl.restoreTermMode(input_handle, term_state);
-    try ansi.showCursor(output);
-    try ansi.resetCodes(output);
-    try ansi.setCursorPos(output, 0, 0);
-    try ansi.clearScreen(output);
 }
