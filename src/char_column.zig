@@ -1,6 +1,6 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
-const term_window = @import("terminal_window.zig");
+const Terminal = @import("Terminal.zig");
 const options = @import("options.zig");
 
 pub const Column = struct {
@@ -26,7 +26,7 @@ pub const Column = struct {
         new_char_modes: ?ansi.GraphicsModes,
         last_color: ?ansi.ColorCode,
     ) void {
-        term_window.writeChar(
+        Terminal.writeChar(
             ' ',
             self.col,
             self.tail,
@@ -34,7 +34,7 @@ pub const Column = struct {
             null,
             null,
         );
-        term_window.writeChar(
+        Terminal.writeChar(
             null,
             self.col,
             self.head,
@@ -46,7 +46,7 @@ pub const Column = struct {
         self.head += 1;
         self.tail += 1;
 
-        term_window.writeChar(
+        Terminal.writeChar(
             new_char,
             self.col,
             self.head,
@@ -138,7 +138,7 @@ pub const ColumnList = struct {
         if (self.cols.items.len == 0)
             try self.cols.append(createRandomColumn(
                 self.column,
-                term_window.matrix.len,
+                Terminal.getHeight(),
                 self.rng,
             ));
 
@@ -147,8 +147,8 @@ pub const ColumnList = struct {
             var add_new_col = true;
             const new_char_row = self.rng.intRangeAtMost(
                 usize,
-                term_window.matrix.len / 8,
-                term_window.matrix.len,
+                Terminal.getHeight() / 8,
+                Terminal.getHeight(),
             );
 
             while (i < self.cols.items.len) {
@@ -184,7 +184,7 @@ pub const ColumnList = struct {
                 // This method of removing elements from an ArrayList comes from jdh in this livestream:
                 // https://www.youtube.com/live/ajbYYgbDXGk?si=T6sL_hrrBfW--8bB&t=12609
                 // That said, I think I did it a tiny bit better (no struct member var)
-                if (col.tail >= term_window.matrix.len) {
+                if (col.tail >= Terminal.getHeight()) {
                     remove = true;
                 } else if (col.tail < new_char_row) {
                     add_new_col = false;
@@ -197,7 +197,7 @@ pub const ColumnList = struct {
             if (add_new_col)
                 try self.cols.append(createRandomColumn(
                     self.column,
-                    term_window.matrix.len,
+                    Terminal.getHeight(),
                     self.rng,
                 ));
         }

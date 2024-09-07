@@ -4,39 +4,88 @@ const window = @import("terminal_window.zig");
 const modectrl = @import("terminal_mode_control.zig");
 const input = @import("terminal_input.zig");
 const builtin = @import("builtin");
+const termsize = @import("termsize");
 
-var term_mode: modectrl.TermStatus = undefined;
+var term_mode: ?modectrl.TermStatus = null;
+pub var term_height: u16 = 0;
+pub var term_width: u16 = 0;
 
-pub fn init() !void {
-    const stdin = std.io.getStdIn();
+var alloc: std.mem.Allocator = undefined;
+var stdin: std.fs.File = undefined;
 
-    try input.init();
+pub fn init(allocator: std.mem.Allocator) !void {
+    const ts = try termsize.termSize(std.io.getStdOut());
+    stdin = std.io.getStdIn();
 
-    term_mode = try modectrl.enableRawMode(stdin.handle);
-    if (builtin.os.tag == .windows) {
-        try std.os.windows.SetConsoleCtrlHandler(
-            windows_exit_handler,
-            true,
-        );
-    } else {
-        var sa: std.posix.Sigaction = .{
-            .handler = .{
-                .sigaction = posix_exit_handler,
-            },
-            .mask = std.posix.empty_sigset,
-            .flags = std.posix.SA.SIGINFO,
-        };
-        try std.posix.sigaction(std.posix.SIG.INT, &sa, null);
-        try std.posix.sigaction(std.posix.SIG.TERM, &sa, null);
+    if (ts) |t| {
+        alloc = allocator;
+
+        try window.init(t.height, t.width, alloc);
+
+        term_height = t.height;
+        term_width = t.width;
+
+        if (builtin.os.tag == .windows) {
+            try std.os.windows.SetConsoleCtrlHandler(
+                windows_exit_handler,
+                true,
+            );
+        } else {
+            var sa: std.posix.Sigaction = .{
+                .handler = .{
+                    .sigaction = posix_exit_handler,
+                },
+                .mask = std.posix.empty_sigset,
+                .flags = std.posix.SA.SIGINFO,
+            };
+            try std.posix.sigaction(std.posix.SIG.INT, &sa, null);
+            try std.posix.sigaction(std.posix.SIG.TERM, &sa, null);
+        }
     }
 }
 
-pub const getInput = input.getInput;
+pub fn enableRawMode() !void {
+    try input.init();
+    term_mode = try modectrl.enableRawMode(stdin.handle);
+}
+
+pub const getRawInput = input.getInput;
+pub const writeChar = window.writeChar;
+
+pub fn checkSizeChange() bool {
+    var size_changed = false;
+
+    const ts = (termsize.termSize(stdin) catch unreachable).?;
+
+    if ((ts.height != term_height) or (ts.width != term_width)) {
+        term_height = ts.height;
+        term_width = ts.width;
+
+        size_changed = true;
+    }
+    return size_changed;
+}
+
+pub fn updateSize() !void {
+    try window.resize(term_height, term_width, alloc);
+}
+
+pub fn getHeight() u16 {
+    return term_height;
+}
+pub fn getWidth() u16 {
+    return term_width;
+}
+pub const getGrid = window.getGrid;
+pub const print = window.print;
 
 pub fn deinit() !void {
     const stdout = std.io.getStdOut().writer();
-    const stdin = std.io.getStdIn();
-    try modectrl.restoreTermMode(stdin.handle, term_mode);
+
+    window.deinit(alloc);
+    if (term_mode) |t|
+        try modectrl.restoreTermMode(stdin.handle, t);
+
     try ansi.showCursor(stdout);
     try ansi.resetCodes(stdout);
     try ansi.setCursorPos(stdout, 0, 0);

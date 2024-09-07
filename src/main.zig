@@ -1,8 +1,6 @@
 const std = @import("std");
 const ansi = @import("ansi_term_codes.zig");
-const term_window = @import("terminal_window.zig");
 const col = @import("char_column.zig");
-const termsize = @import("termsize");
 const Terminal = @import("Terminal.zig");
 const parg = @import("parg");
 const options = @import("options.zig");
@@ -59,7 +57,6 @@ const color_map = std.StaticStringMap(ansi.ColorCode).initComptime(.{
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
-    var t = try termsize.termSize(std.io.getStdOut());
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
@@ -103,162 +100,151 @@ pub fn main() !void {
             .unexpected_value => @panic("unexpected value"),
         }
     }
+    const b = std.io.BufferedWriter(1_000_000, @TypeOf(stdout));
+    var buffer: b = .{ .unbuffered_writer = stdout };
+    const bufOut = buffer.writer();
 
-    if (t) |*terminfo| {
-        // If the termsize is available, create a cell matrix of that size
-        var prev_cols: u16 = 0;
-        var prev_rows: u16 = 0;
-        const b = std.io.BufferedWriter(1_000_000, @TypeOf(stdout));
-        var buffer: b = .{ .unbuffered_writer = stdout };
-        const bufOut = buffer.writer();
+    try Terminal.init(allocator);
+    try Terminal.enableRawMode();
+    defer Terminal.deinit() catch unreachable;
 
-        try Terminal.init();
-        defer Terminal.deinit() catch unreachable;
+    var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
+    try ansi.hideCursor(stdout);
+    try ansi.clearScreen(stdout);
 
-        var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
-        try ansi.hideCursor(stdout);
-        try ansi.clearScreen(stdout);
-
-        try term_window.init(0, 0, allocator);
-
-        for (term_window.matrix) |row| {
-            for (row) |*cell| {
-                cell.setBgColor(bg_color);
-            }
+    for (Terminal.getGrid()) |row| {
+        for (row) |*cell| {
+            cell.setBgColor(bg_color);
         }
+    }
 
-        defer term_window.deinit(allocator);
+    var charstrs = std.ArrayList(col.ColumnList).init(allocator);
+    defer {
+        for (charstrs.items) |*c| {
+            c.deinit();
+        }
+        charstrs.deinit();
+    }
+    for (0..Terminal.getWidth()) |i| {
+        // Only have columns for every other column in the terminal
+        // It looks a lot better (and is what cmatrix does)
+        if (i % 2 == 0) {
+            try charstrs.append(col.ColumnList.init(
+                allocator,
+                i,
+                &flags,
+                &rng.random(),
+                color,
+            ));
+        }
+    }
 
-        var charstrs = std.ArrayList(col.ColumnList).init(allocator);
-        defer {
+    var input: ?u8 = 0;
+
+    while (true) {
+        input = Terminal.getRawInput();
+
+        if (Terminal.checkSizeChange()) {
             for (charstrs.items) |*c| {
                 c.deinit();
             }
             charstrs.deinit();
+
+            try ansi.clearScreen(stdout);
+
+            try Terminal.updateSize();
+
+            for (Terminal.getGrid()) |row| {
+                for (row) |*cell| {
+                    cell.setBgColor(bg_color);
+                }
+            }
+
+            charstrs = std.ArrayList(col.ColumnList).init(allocator);
+
+            for (0..Terminal.getWidth()) |i| {
+                // Only have columns for every other column in the terminal
+                // It looks a lot better (and is what cmatrix does)
+                if (i % 2 == 0) {
+                    try charstrs.append(col.ColumnList.init(
+                        allocator,
+                        i,
+                        &flags,
+                        &rng.random(),
+                        color,
+                    ));
+                }
+            }
         }
 
-        var input: ?u8 = 0;
+        try Terminal.print(bufOut);
+        try buffer.flush();
 
-        var cols: u16 = 0;
-        var rows: u16 = 0;
-        while (true) {
-            input = Terminal.getInput();
-
-            t = (try termsize.termSize(std.io.getStdOut())).?;
-            cols = terminfo.width;
-            rows = terminfo.height;
-
-            if ((cols != prev_cols) or (rows != prev_rows)) {
-                for (charstrs.items) |*c| {
-                    c.deinit();
-                }
-                charstrs.deinit();
-
-                try ansi.clearScreen(stdout);
-
-                try term_window.resize(
-                    rows,
-                    cols,
-                    allocator,
-                );
-
-                for (term_window.matrix) |row| {
-                    for (row) |*cell| {
-                        cell.setBgColor(bg_color);
+        if (input) |i| {
+            switch (i) {
+                '!', '@', '#', '$', '%', '^', '&' => |c| {
+                    color = switch (c) {
+                        '!' => .red,
+                        '@' => .green,
+                        '#' => .yellow,
+                        '$' => .blue,
+                        '%' => .magenta,
+                        '^' => .cyan,
+                        '&' => .white,
+                        else => .default,
+                    };
+                    flags.rainbow = false;
+                    setColor(color);
+                    for (charstrs.items) |*colList| {
+                        colList.color = color;
                     }
-                }
-
-                charstrs = std.ArrayList(col.ColumnList).init(allocator);
-
-                for (0..cols) |i| {
-                    // Only have columns for every other column in the terminal
-                    // It looks a lot better (and is what cmatrix does)
-                    if (i % 2 == 0) {
-                        try charstrs.append(col.ColumnList.init(
-                            allocator,
-                            i,
-                            &flags,
-                            &rng.random(),
-                            color,
-                        ));
-                    }
-                }
+                },
+                '0' => {
+                    printDelay = .UPS_500;
+                },
+                '1' => {
+                    printDelay = .UPS_250;
+                },
+                '2' => {
+                    printDelay = .UPS_200;
+                },
+                '3' => {
+                    printDelay = .UPS_160;
+                },
+                '4' => {
+                    printDelay = .UPS_120;
+                },
+                '5' => {
+                    printDelay = .UPS_100;
+                },
+                '6' => {
+                    printDelay = .UPS_80;
+                },
+                '7' => {
+                    printDelay = .UPS_60;
+                },
+                '8' => {
+                    printDelay = .UPS_40;
+                },
+                '9' => {
+                    printDelay = .UPS_20;
+                },
+                'q' => {
+                    break;
+                },
+                else => {},
             }
-
-            try term_window.print(bufOut);
-            try buffer.flush();
-
-            if (input) |i| {
-                switch (i) {
-                    '!', '@', '#', '$', '%', '^', '&' => |c| {
-                        color = switch (c) {
-                            '!' => .red,
-                            '@' => .green,
-                            '#' => .yellow,
-                            '$' => .blue,
-                            '%' => .magenta,
-                            '^' => .cyan,
-                            '&' => .white,
-                            else => .default,
-                        };
-                        flags.rainbow = false;
-                        setColor(color);
-                        for (charstrs.items) |*colList| {
-                            colList.color = color;
-                        }
-                    },
-                    '0' => {
-                        printDelay = .UPS_500;
-                    },
-                    '1' => {
-                        printDelay = .UPS_250;
-                    },
-                    '2' => {
-                        printDelay = .UPS_200;
-                    },
-                    '3' => {
-                        printDelay = .UPS_160;
-                    },
-                    '4' => {
-                        printDelay = .UPS_120;
-                    },
-                    '5' => {
-                        printDelay = .UPS_100;
-                    },
-                    '6' => {
-                        printDelay = .UPS_80;
-                    },
-                    '7' => {
-                        printDelay = .UPS_60;
-                    },
-                    '8' => {
-                        printDelay = .UPS_40;
-                    },
-                    '9' => {
-                        printDelay = .UPS_20;
-                    },
-                    'q' => {
-                        break;
-                    },
-                    else => {},
-                }
-            }
-
-            for (charstrs.items) |*c| {
-                try c.update();
-            }
-            prev_cols = cols;
-            prev_rows = rows;
-
-            std.time.sleep(@intFromEnum(printDelay));
         }
-    } else {
-        std.debug.print("Unable to start zmatrix: Could not determine terminal size\n", .{});
+
+        for (charstrs.items) |*c| {
+            try c.update();
+        }
+        std.time.sleep(@intFromEnum(printDelay));
     }
 }
 
 fn setColor(color: ansi.ColorCode) void {
-    for (term_window.matrix) |row| {
+    for (Terminal.getGrid()) |row| {
         for (row) |*cell| {
             cell.setFgColor(color);
         }
