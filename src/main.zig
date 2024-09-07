@@ -160,7 +160,6 @@ pub fn main() !void {
             rows = terminfo.height;
 
             if ((cols != prev_cols) or (rows != prev_rows)) {
-                term_window.deinit(allocator);
                 for (charstrs.items) |*c| {
                     c.deinit();
                 }
@@ -168,7 +167,7 @@ pub fn main() !void {
 
                 try ansi.clearScreen(stdout);
 
-                try term_window.init(
+                try term_window.resize(
                     rows,
                     cols,
                     allocator,

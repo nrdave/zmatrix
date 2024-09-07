@@ -105,6 +105,14 @@ pub fn print(writer: anytype) !void {
     }
 }
 
+pub fn resize(
+    r: u32,
+    c: u32,
+    allocator: std.mem.Allocator,
+) !void {
+    deinit(allocator);
+    try init(r, c, allocator);
+}
 pub fn deinit(allocator: std.mem.Allocator) void {
     for (matrix) |row| {
         allocator.free(row);
