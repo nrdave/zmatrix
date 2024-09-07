@@ -124,6 +124,8 @@ pub fn setCursorPos(writer: anytype, row: usize, col: usize) !void {
 }
 
 test "color_change" {
+    // This test is meant to be used to visually confirm functionality i.e.
+    // the reported test result is meaningless
     const writer = std.io.getStdOut().writer();
 
     try setForegroundColor(writer, .bright_yellow);
@@ -145,6 +147,8 @@ test "color_change" {
 }
 
 test "graphics_modes" {
+    // This test is meant to be used to visually confirm functionality i.e.
+    // the reported test result is meaningless
     const writer = std.io.getStdOut().writer();
 
     var g = GraphicsModes{};

@@ -42,8 +42,6 @@ pub const Cell = struct {
 // ANSI cursor locations are 1-based i.e. 1 represents the first row/col
 var x0: usize = 1;
 var y0: usize = 1;
-var num_rows: usize = undefined;
-var num_cols: usize = undefined;
 pub var matrix: [][]Cell = undefined;
 
 pub fn init(
@@ -113,6 +111,7 @@ pub fn resize(
     deinit(allocator);
     try init(r, c, allocator);
 }
+
 pub fn deinit(allocator: std.mem.Allocator) void {
     for (matrix) |row| {
         allocator.free(row);
@@ -121,16 +120,31 @@ pub fn deinit(allocator: std.mem.Allocator) void {
 }
 
 test "cell_matrix" {
+    // This test is meant to be used to visually confirm functionality i.e.
+    // the reported test result is meaningless
     const alloc = std.testing.allocator;
 
     try init(5, 5, alloc);
-    setOrigin(60, 0);
+    setOrigin(6, 0);
     writeChar('c', 3, 3, null, null, .{ .bold = true });
 
     const stdout = std.io.getStdOut().writer();
     try ansi.clearScreen(stdout);
 
     try print(stdout);
+
+    // Check for block of struckthrough blue a's with red background
+    try resize(8, 8, alloc);
+    setOrigin(15, 9);
+    for (matrix, 0..) |row, r| {
+        for (row, 0..) |_, c| {
+            writeChar('a', c, @bitCast(r), .blue, .red, .{ .strikethrough = true });
+        }
+    }
+
+    try print(stdout);
+
+    _ = try stdout.writeByte('\n');
 
     deinit(alloc);
 }
