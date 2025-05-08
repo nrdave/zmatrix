@@ -5,12 +5,12 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .termsize = .{
-            .url = "https://github.com/softprops/zig-termsize/archive/refs/tags/v0.1.0.tar.gz",
-            .hash = "1220c37fb03650fd86dff19134116a2bd7e8e20731193aa30f11769881a2d558c8c1",
+            .url = "https://github.com/nrdave/zig-termsize/archive/refs/heads/master.tar.gz",
+            .hash = "termsize-0.1.0-0mwB1lUVAABbue_g6bsOaJo5amMy5S1-n0TflD0gNqud",
         },
         .parg = .{
             .url = "https://github.com/judofyr/parg/archive/refs/heads/main.tar.gz",
-            .hash = "1220b3da27690b99a15babef2e56d74d4683eb06ad0c2ac35ef883767177556bb344",
+            .hash = "parg-0.0.0-dOPWZH1XAAAveeTyz6L_X4RlfPwFctMHcdjPtvMZz4eY",
         },
     },
     .paths = .{""},

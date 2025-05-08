@@ -38,8 +38,8 @@ pub fn init(allocator: std.mem.Allocator) !void {
                 .mask = std.posix.empty_sigset,
                 .flags = std.posix.SA.SIGINFO,
             };
-            try std.posix.sigaction(std.posix.SIG.INT, &sa, null);
-            try std.posix.sigaction(std.posix.SIG.TERM, &sa, null);
+            std.posix.sigaction(std.posix.SIG.INT, &sa, null);
+            std.posix.sigaction(std.posix.SIG.TERM, &sa, null);
         }
     }
 }

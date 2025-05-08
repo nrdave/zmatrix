@@ -32,7 +32,7 @@ fn Delay() type {
         };
     }
     return @Type(.{
-        .Enum = .{
+        .@"enum" = .{
             .tag_type = u64,
             .fields = fields[0..],
             .decls = &[_]std.builtin.Type.Declaration{},
@@ -108,7 +108,7 @@ pub fn main() !void {
     try Terminal.enableRawMode();
     defer Terminal.deinit() catch unreachable;
 
-    var rng = std.rand.DefaultPrng.init(@bitCast(std.time.timestamp()));
+    var rng = std.Random.DefaultPrng.init(@bitCast(std.time.timestamp()));
     try ansi.hideCursor(stdout);
     try ansi.clearScreen(stdout);
 
