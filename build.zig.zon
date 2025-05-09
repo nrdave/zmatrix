@@ -4,13 +4,13 @@
     .version = "0.2.0",
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
-        .termsize = .{
-            .url = "https://github.com/nrdave/zig-termsize/archive/refs/heads/master.tar.gz",
-            .hash = "termsize-0.1.0-0mwB1lUVAABbue_g6bsOaJo5amMy5S1-n0TflD0gNqud",
-        },
         .parg = .{
             .url = "https://github.com/judofyr/parg/archive/refs/heads/main.tar.gz",
             .hash = "parg-0.0.0-dOPWZH1XAAAveeTyz6L_X4RlfPwFctMHcdjPtvMZz4eY",
+        },
+        .termsize = .{
+            .url = "https://github.com/softprops/zig-termsize/archive/refs/heads/master.tar.gz",
+            .hash = "termsize-0.1.0-0mwB1lUVAABbue_g6bsOaJo5amMy5S1-n0TflD0gNqud",
         },
     },
     .paths = .{""},
